@@ -60,7 +60,7 @@ deciphering of true biological expression of extra TCR chains from technical
 artifacts. With less missing data and larger clone sizes, users are then able 
 to make best use of their scTCR-seq data. The ECLIPSE workflow is also quite 
 streamlined, typically utilizing just 2 core functions (`ECLIPSE` --> 
-`tcrDoubletDetect`). After completing these two functions, users are ready
+`tcrArtifactDetect`). After completing these two functions, users are ready
 for convenient downstream analysis with the `r Biocpkg("scRepertoire")` 
 package.
 
@@ -388,16 +388,16 @@ columns having a scR_prefix to show what would happen with traditional
 analysis. For a full list of columns added by `ECLIPSE`, please refer to the 
 supplemental information section.
 
-# Running `tcrDoubletDetect`
+# Running `tcrArtifactDetect`
 Now that the `ECLIPSE` function has been ran, we should now run the 2nd core 
-ECLIPSE function, `tcrDoubletDetect`, to filter out cells with excessive TCR 
+ECLIPSE function, `tcrArtifactDetect`, to filter out cells with excessive TCR 
 chains (these cells are likely a mix of doublets and cells with TCR 
 contamination). Here we remove any cells with >2 TCRα chains, >2 
 TCRβ chains, or >4 total (α + β) chains:
-```{r runDoubletDetect, fig.alt = "Plots from tcrDoubletDetect"}
-object_after_ECLIPSE <- tcrDoubletDetect(object_after_ECLIPSE,
-                                         singleChainLimit = 2,
-                                         totalChainLimit = 4)
+```{r runArtifactDetect, fig.alt = "Plots from tcrArtifactDetect"}
+object_after_ECLIPSE <- tcrArtifactDetect(object_after_ECLIPSE,
+                                          singleChainLimit = 2,
+                                          totalChainLimit = 4)
 ```
 This function by default also prints plots that may be useful in setting
 additional filtering thresholds. Here we can see that cells with 4 total TCR 
