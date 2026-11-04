@@ -22,7 +22,7 @@
 #'
 #' @importFrom dplyr mutate n n_distinct rename row_number summarise ungroup
 #'
-#' @importFrom dplyr desc first min_rank rowwise select
+#' @importFrom dplyr desc first min_rank rowwise select relocate
 #'
 #' @importFrom ggplot2 aes element_text geom_boxplot geom_point
 #'

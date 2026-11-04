@@ -1,6 +1,6 @@
 #' @title Identify three TCR chain clones
-#' 
-#' @description This internal function finds which T cell clones likely have 3 
+#'
+#' @description This internal function finds which T cell clones likely have 3
 #' total TCR chains. It is a helper function for findThreeChainClones.
 #'
 #' @param Contigs tibble of contigs from cellranger all or
@@ -13,10 +13,10 @@
 #' second shows how/why some of those clones were called as such. The second
 #' is pre-filtering, so some clones may not have been called as having 3 total
 #' chains in the end.
-#' 
-#' @return A list of first the clones that have 3 TCR chains, then the 
-#' clonotypes of select cells, then all bitypic chains. If show is provided 
-#' to Mode, then a list of two tables are returned showing the clones with 3 
+#'
+#' @return A list of first the clones that have 3 TCR chains, then the
+#' clonotypes of select cells, then all bitypic chains. If show is provided
+#' to Mode, then a list of two tables are returned showing the clones with 3
 #' TCR chains.
 .identifyThreeChainClones <- function(Contigs,
                                         Chain,
@@ -65,7 +65,8 @@
 
         }
 
-        tcrs <- tcrs %>% relocate(monotypic, .after = CTaa)
+        tcrs <- tcrs %>%
+            relocate(all_of("monotypic"), .after = all_of("CTaa"))
 
         tcrs <- tcrs %>% filter(.data$monotypic != "NA" &
             .data$bitypic != "NA")
@@ -107,7 +108,7 @@
                     sep = " ", remove = FALSE, fill = "right"
                 )
         } else if (nrow(combos) == 0) {
-            return(contigs)
+            return(Contigs)
         }
 
         combos <- as.data.frame(combos)
@@ -315,15 +316,16 @@
 
 
 
+
 #' @title Modify three TCR chain contigs
-#' 
-#' @description This internal function takes the clones that have 3 TCR chains 
-#' and modifies their contigs so that these clones can be retained as having 
+#'
+#' @description This internal function takes the clones that have 3 TCR chains
+#' and modifies their contigs so that these clones can be retained as having
 #' 3 TCR chains downstream. It is a helper function for findThreeChainClones.
-#' 
+#'
 #' @param Contigs tibble of TCR contigs.
 #' @param three_chain_clones a tibble of the three chain clones.
-#' @param Clones the clonotypes of select cells made by 
+#' @param Clones the clonotypes of select cells made by
 #' .identifyThreeChainClones.
 #' @param Chain "alpha" or "beta". This tells it whether clones with two of
 #' which chain should be looked for.
@@ -333,7 +335,7 @@
 #' second shows how/why some of those clones were called as such. The second
 #' is pre-filtering, so some clones may not have been called as having 3 total
 #' chains in the end.
-#' 
+#'
 #' @return a tibble of modified TCR contigs.
 .modifyThreeChainContigs <- function(Contigs,
                                         three_chain_clones,
@@ -469,11 +471,11 @@
 
 
 #' @title Find missing monotypic chains
-#' 
-#' @description This internal function finds cells that may be in clones with 
-#' 3 TCR chains and have no monotypic chain detected. If likely, it assigns 
+#'
+#' @description This internal function finds cells that may be in clones with
+#' 3 TCR chains and have no monotypic chain detected. If likely, it assigns
 #' them to these clones. It is a helper function for findThreeChainClones.
-#' 
+#'
 #' @param Contigs modified TCR contigs from .modifyThreeChainContigs.
 #' @param specialTCRs a vector of bitypic chains.
 #' @param Chain "alpha" or "beta". This tells it whether clones with two of
@@ -486,7 +488,7 @@
 #' chains in the end.
 #' @param print_stats specifies whether notes/stats
 #' should be printed.
-#' 
+#'
 #' @return a tibble of modified TCR contigs.
 .findMissingMonotypicChains <- function(Contigs,
                                         specialTCRs,
@@ -571,7 +573,8 @@
 
             }
 
-            vdj <- vdj %>% relocate(monotypic, .after = CTaa)
+            vdj <- vdj %>%
+                relocate(all_of("monotypic"), .after = all_of("CTaa"))
 
             vdj <- vdj %>%
                 rowwise() %>%
