@@ -1,4 +1,4 @@
-#' @title Finds and removes doublets from Seurat objects
+#' @title Finds and removes doublets/TCR contamination from Seurat objects
 #'
 #' @description Filters out cells with excessive numbers of TCR chains and
 #' helps set thresholds for RNA counts based on TCR chain count.
@@ -20,12 +20,12 @@
 #' @examples
 #' data(test_seurat_with_tcr)
 #'
-#' cd8_tcr_filtered <- tcrDoubletDetect(
+#' cd8_tcr_filtered <- tcrArtifactDetect(
 #'                             test_seurat_with_tcr,
 #'                             singleChainLimit = 2)
 #'
 #' @export
-tcrDoubletDetect <- function(object,
+tcrArtifactDetect <- function(object,
                                 filter = TRUE,
                                 singleChainLimit = 2,
                                 totalChainLimit = -1,

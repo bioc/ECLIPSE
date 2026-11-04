@@ -2,7 +2,7 @@
 
 export(ECLIPSE)
 export(findThreeChainClones)
-export(tcrDoubletDetect)
+export(tcrArtifactDetect)
 importFrom(VDJdive,clonoNames)
 importFrom(VDJdive,clonoStats)
 importFrom(VDJdive,readVDJcontigs)
