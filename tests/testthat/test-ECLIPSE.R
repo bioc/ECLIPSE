@@ -1,11 +1,17 @@
 data(test_seurat)
 data(post_qc_contigs)
+data(unit_test_object)
 
 files <- system.file("extdata/examples", package = "ECLIPSE")
 tcr_paths <- list.files(files,
     pattern = "\\.csv.gz$",
     full.names = TRUE
 )
+
+unit_test_files <- system.file("extdata/unit_tests/S6T", package = "ECLIPSE")
+unit_test_tcr_paths <- list.files(unit_test_files,
+    pattern = "\\.csv",
+    full.names = TRUE)
 
 test_seurat_with_tcr <- ECLIPSE(
     contig_file_paths = tcr_paths,
@@ -25,8 +31,9 @@ out_contigs <- findThreeChainClones(post_qc_contigs,
     chain = "b"
 )
 
-filtered_seurat <- tcrDoubletDetect(test_seurat_with_tcr)
+filtered_seurat <- tcrArtifactDetect(test_seurat_with_tcr)
 
+test_seurat$index2 <- 1.2
 
 
 
@@ -289,12 +296,81 @@ test_that("ECLIPSE accepts only valid inputs", {
         ),
         "TRUE or FALSE not provided to returnFilteredContigs"
     )
+
+    expect_error(
+        ECLIPSE(
+            contig_file_paths = tcr_paths,
+            contig_folder_path = c(files, files),
+            contig_type = "manual",
+            seurat_object = test_seurat,
+            batch = "index",
+            donor = "donor",
+            group = "donor",
+            original_barcode = "Cell_Barcode",
+            detailedEclipseStats = FALSE,
+            combineTcrArgs = list(FALSE, FALSE, FALSE, TRUE),
+            allowDoubleChains = "both",
+            verbose = FALSE,
+        ),
+        "Please do not use contig_file_paths and contig_folder_paths"
+    )
+
+    expect_error(
+        ECLIPSE(
+            contig_file_paths = tcr_paths,
+            contig_type = "manual",
+            seurat_object = test_seurat,
+            batch = "donor",
+            donor = "donor",
+            group = "donor",
+            original_barcode = "Cell_Barcode",
+            detailedEclipseStats = FALSE,
+            combineTcrArgs = list(FALSE, FALSE, FALSE, TRUE),
+            allowDoubleChains = "both",
+            verbose = FALSE,
+        ),
+        "Batch column should be numeric"
+    )
+
+    expect_error(
+        ECLIPSE(
+            contig_file_paths = tcr_paths,
+            contig_type = "manual",
+            seurat_object = test_seurat,
+            batch = "index2",
+            donor = "donor",
+            group = "donor",
+            original_barcode = "Cell_Barcode",
+            detailedEclipseStats = FALSE,
+            combineTcrArgs = list(FALSE, FALSE, FALSE, TRUE),
+            allowDoubleChains = "both",
+            verbose = FALSE,
+        ),
+        "Batch column must contain whole numbers and start with 1."
+    )
+
+    expect_error(
+        ECLIPSE(
+            contig_file_paths = tcr_paths,
+            contig_type = "manual",
+            seurat_object = test_seurat,
+            batch = "index",
+            donor = "index",
+            group = "donor",
+            original_barcode = "Cell_Barcode",
+            detailedEclipseStats = FALSE,
+            combineTcrArgs = list(FALSE, FALSE, FALSE, TRUE),
+            allowDoubleChains = "both",
+            verbose = FALSE,
+        ),
+        "Donor and group cannot be numeric"
+    )
 })
 
 
 
 
-test_that("ECLIPSE returns a correctly formatted Seurat object", {
+test_that("ECLIPSE returns the correct output", {
     ### Expected columns present in meta.data
     expect_equal(
         c(
@@ -344,10 +420,104 @@ test_that("ECLIPSE returns a correctly formatted Seurat object", {
         sum(is.na(test_seurat_with_tcr$scR_CTaa)),
         sum(is.na(test_seurat_with_tcr$CTaa))
     )
+
+    ### returnFilteredContigs = TRUE should return a tibble
+    expect_s3_class(
+        ECLIPSE(
+            contig_file_paths = tcr_paths,
+            contig_type = "manual",
+            seurat_object = test_seurat,
+            batch = "index",
+            donor = "donor",
+            group = "donor",
+            original_barcode = "Cell_Barcode",
+            detailedEclipseStats = FALSE,
+            combineTcrArgs = list(FALSE, FALSE, FALSE, TRUE),
+            allowDoubleChains = "both",
+            verbose = TRUE,
+            returnFilteredContigs = TRUE
+        ),
+        "tbl_df"
+    )
+
+    expect_s4_class(
+        ECLIPSE(
+            contig_file_paths = unit_test_tcr_paths,
+            contig_type = "manual",
+            seurat_object = unit_test_object,
+            batch = "index",
+            donor = "donor",
+            group = "donor",
+            original_barcode = "Cell_Barcode",
+            detailedEclipseStats = FALSE,
+            combineTcrArgs = list(FALSE, FALSE, FALSE, TRUE),
+            allowDoubleChains = "both",
+            verbose = TRUE,
+            returnFilteredContigs = FALSE
+        ),
+        "Seurat"
+    )
+
+unit_test_object$barcode <- unit_test_object$Cell_Barcode
+
+    expect_s4_class(
+        ECLIPSE(
+            contig_file_paths = unit_test_tcr_paths,
+            contig_type = "manual",
+            seurat_object = unit_test_object,
+            batch = "index",
+            donor = "donor",
+            group = "donor",
+            original_barcode = "barcode",
+            detailedEclipseStats = FALSE,
+            combineTcrArgs = list(FALSE, FALSE, FALSE, TRUE),
+            allowDoubleChains = "both",
+            verbose = TRUE,
+            returnFilteredContigs = FALSE
+        ),
+        "Seurat"
+    )
+
+
 })
 
 
+test_that("The verbose argument of ECLIPSE works correctly", {
 
+    expect_message(
+        ECLIPSE(
+            contig_file_paths = tcr_paths,
+            contig_type = "manual",
+            seurat_object = test_seurat,
+            batch = "index",
+            donor = "donor",
+            group = "donor",
+            original_barcode = "Cell_Barcode",
+            detailedEclipseStats = FALSE,
+            combineTcrArgs = list(FALSE, FALSE, FALSE, TRUE),
+            allowDoubleChains = "both",
+            verbose = TRUE,
+        ),
+        "Finding clones with extra chains"
+    )
+
+    expect_silent(
+        ECLIPSE(
+            contig_file_paths = tcr_paths,
+            contig_type = "manual",
+            seurat_object = test_seurat,
+            batch = "index",
+            donor = "donor",
+            group = "donor",
+            original_barcode = "Cell_Barcode",
+            detailedEclipseStats = FALSE,
+            combineTcrArgs = list(FALSE, FALSE, FALSE, TRUE),
+            allowDoubleChains = "both",
+            verbose = FALSE,
+        )
+    )
+
+})
 
 test_that("findThreeChainClones accepts only valid inputs", {
     expect_error(
@@ -390,7 +560,8 @@ test_that("findThreeChainClones accepts only valid inputs", {
 
 
 
-test_that("findThreeChainClones returns contigs", {
+test_that("findThreeChainClones returns correct outputs", {
+
     ### Returns data.frame
     expect_true(is.data.frame(out_contigs))
 
@@ -413,20 +584,30 @@ test_that("findThreeChainClones returns contigs", {
         %in% colnames(out_contigs)),
         5
     )
+
+    ### mode = "show" returns a list
+    expect_true(
+        is.list(findThreeChainClones(post_qc_contigs,
+            chain = "a",
+            mode = "show",
+            printStats = TRUE
+            )
+        )
+    )
 })
 
 
 
 
-test_that("tcrDoubletDetect accepts only Seurat objects
-          after ECLIPSE was ran", {
+test_that("tcrArtifactDetect accepts only valid inputs", {
+
     expect_error(
-        tcrDoubletDetect(test_seurat),
-        "The seurat object must have had ECLIPSE ran on it"
+        tcrArtifactDetect(test_seurat),
+            "The seurat object must have had ECLIPSE ran on it"
     )
 
     expect_error(
-        tcrDoubletDetect(test_seurat_with_tcr,
+        tcrArtifactDetect(test_seurat_with_tcr,
             filter = "fake",
             singleChainLimit = 2,
             totalChainLimit = -1,
@@ -437,7 +618,7 @@ test_that("tcrDoubletDetect accepts only Seurat objects
     )
 
     expect_error(
-        tcrDoubletDetect(test_seurat_with_tcr,
+        tcrArtifactDetect(test_seurat_with_tcr,
             filter = TRUE,
             singleChainLimit = 2.5,
             totalChainLimit = -1,
@@ -448,7 +629,7 @@ test_that("tcrDoubletDetect accepts only Seurat objects
     )
 
     expect_error(
-        tcrDoubletDetect(test_seurat_with_tcr,
+        tcrArtifactDetect(test_seurat_with_tcr,
             filter = TRUE,
             singleChainLimit = 0,
             totalChainLimit = -1,
@@ -457,11 +638,45 @@ test_that("tcrDoubletDetect accepts only Seurat objects
         ),
         "singleChainLimit must be at least 2"
     )
+
+    expect_warning(
+        tcrArtifactDetect(test_seurat_with_tcr,
+            filter = TRUE,
+            singleChainLimit = 1,
+            totalChainLimit = -1,
+            showPlots = TRUE,
+            verbose = TRUE
+            ),
+            "Filtering cells with more than 1"
+    )
+
+    expect_error(
+        tcrArtifactDetect(test_seurat_with_tcr,
+            filter = TRUE,
+            singleChainLimit = 0,
+            totalChainLimit = "1",
+            showPlots = TRUE,
+            verbose = TRUE
+            ),
+            "singleChainLimit and totalChainLimit both must be numbers"
+    )
+
+
+    expect_warning(
+        tcrArtifactDetect(test_seurat_with_tcr,
+            filter = TRUE,
+            singleChainLimit = 2,
+            totalChainLimit = 2,
+            showPlots = TRUE,
+            verbose = TRUE
+            ),
+            "Filtering all cells with more than 2 total chains"
+    )
 })
 
 
 
-test_that("tcrDoubletDetect returns a filtered Seurat object", {
+test_that("tcrArtifactDetect returns a filtered Seurat object", {
     ### No columns are added
     expect_equal(
         ncol(test_seurat_with_tcr@meta.data),
@@ -474,3 +689,604 @@ test_that("tcrDoubletDetect returns a filtered Seurat object", {
         nrow(test_seurat_with_tcr@meta.data)
     )
 })
+
+test_that("The verbose argument of tcrArtifactDetect works", {
+
+    expect_message(
+        tcrArtifactDetect(test_seurat_with_tcr,
+            filter = TRUE,
+            singleChainLimit = 2,
+            totalChainLimit = 3,
+            showPlots = TRUE,
+            verbose = TRUE
+            ),
+        "were removed due to having >"
+    )
+
+    expect_silent(
+        tcrArtifactDetect(test_seurat_with_tcr,
+            filter = TRUE,
+            singleChainLimit = 2,
+            totalChainLimit = 3,
+            showPlots = TRUE,
+            verbose = FALSE
+        )
+    )
+})
+
+
+
+
+### Making all inputs
+seurat_object <- test_seurat
+contig_type <- "manual"
+contig_folder_paths <- NULL
+contig_file_paths <- tcr_paths
+original_barcode <- "Cell_Barcode"
+verbose <- FALSE
+batch <- "index"
+donor <- "donor"
+group <- "donor"
+format <- "Blank"
+returnFilteredContigs <- FALSE
+combineTcrArgs <- list(FALSE, FALSE, FALSE, TRUE)
+detailedEclipseStats <- FALSE
+allowDoubleChains <- TRUE
+
+    output1 <- .readContigs(Contig_type = contig_type,
+                                Contig_folder_paths = contig_folder_paths,
+                                Contig_file_paths = contig_file_paths,
+                                Verbose = verbose)
+
+    output2 <- .qcFilterContigs(output1,
+                                Seurat_object = seurat_object,
+                                Batch = batch,
+                                Donor = donor,
+                                Group = group,
+                                Original_barcode = original_barcode,
+                                Format = format,
+                                ReturnFilteredContigs = returnFilteredContigs,
+                                Verbose = verbose)
+
+    donors <- unique(as.vector(output2[[1]][, donor])[[1]])
+    new_contigs <- vector("list", length(donors))
+
+    for (i in seq_along(donors)) {
+        ### THIS PART IS FINDING THE COMBO CLONES AND
+        ### REWRITING THE CONTIG FILES
+        if (allowDoubleChains %in% c("Neither", "neither") == FALSE &
+            verbose == TRUE) {
+            message(
+                "Running donor ", i, "/",
+                length(donors), " (", donors[i], "):"
+            )
+        }
+
+        slim <- output2[[1]] %>% filter(.data[[donor]] == donors[i])
+
+        if (allowDoubleChains %in% c("Alpha", "alpha", "Both", "both")) {
+            ### Calling clones with multiple alpha chains
+            ### and then rewriting the contig files to address this
+            slim <- findThreeChainClones(
+                contigs = slim,
+                chain = "alpha",
+                printStats = verbose
+            )
+        }
+
+        if (allowDoubleChains %in% c("Beta", "beta", "Both", "both")) {
+            ### Calling clones with multiple beta chains
+            ### and then rewriting the contig files to address this
+            slim <- findThreeChainClones(
+                contigs = slim,
+                chain = "beta",
+                printStats = verbose
+            )
+        }
+
+        new_contigs[[i]] <- slim
+
+        if (verbose == TRUE) message()
+    }
+
+    contigs_post <- bind_rows(new_contigs)
+
+
+    output3 <- .runVDJdive(Contigs = contigs_post,
+                           Donor = donor,
+                           Verbose = verbose)
+
+    output4 <- .assignFinalClonotypes(em_results = output3,
+                                      Contigs = output2[[1]],
+                                      Seurat_object = output2[[2]],
+                                      Orphan_contigs = output2[[3]],
+                                      Donor = donor,
+                                      Group = group,
+                                      CombineTcrArgs = combineTcrArgs,
+                                      Verbose = verbose)
+
+    output5 <- .reformatSeuratObject(Seurat_object = output4,
+        Group = group,
+        DetailedEclipseStats = detailedEclipseStats,
+        Verbose = verbose)
+
+
+
+
+test_that(".readContigs works correctly", {
+
+    expect_error(
+        .readContigs(
+            Contig_type = "fake",
+            Contig_folder_paths = NULL,
+            Contig_file_paths = tcr_paths,
+            Verbose = TRUE
+        ),
+        "Incorrect contig type. Should be all or filtered"
+    )
+
+    expect_error(
+        .readContigs(
+            Contig_type = "all",
+            Contig_folder_paths = NULL,
+            Contig_file_paths = NULL,
+            Verbose = TRUE
+        ),
+        "Please provide folders to contig_folder_paths that have the"
+    )
+
+    expect_error(
+        .readContigs(
+            Contig_type = "manual",
+            Contig_folder_paths = NULL,
+            Contig_file_paths = NULL,
+            Verbose = TRUE
+        ),
+        "No contig file paths provided"
+    )
+
+    expect_error(
+        .readContigs(
+            Contig_type = "all",
+            Contig_folder_paths = list("a", "b"),
+            Contig_file_paths = NULL,
+            Verbose = TRUE
+        ),
+        "contig_folder_paths must be a vector"
+    )
+
+    expect_error(
+        .readContigs(
+            Contig_type = "manual",
+            Contig_folder_paths = NULL,
+            Contig_file_paths = list("a", "b"),
+            Verbose = TRUE
+        ),
+        "contig_file_paths must be a vector"
+    )
+
+    expect_error(
+        .readContigs(
+            Contig_type = "manual",
+            Contig_folder_paths = c("a", "b"),
+            Contig_file_paths = c("a", "b"),
+            Verbose = TRUE
+        ),
+        "Please do not use contig_file_paths and contig_folder_paths"
+    )
+
+    expect_error(
+        .readContigs(
+            Contig_type = "manual",
+            Contig_folder_paths = c("a", "b"),
+            Contig_file_paths = c("a", "b"),
+            Verbose = TRUE
+        ),
+        "Please do not use contig_file_paths and contig_folder_paths"
+    )
+
+     expect_error(
+        .readContigs(
+            Contig_type = "manual",
+            Contig_folder_paths = NULL,
+            Contig_file_paths = c("a", "b"),
+            Verbose = 1
+        ),
+        "TRUE or FALSE not provided to verbose"
+    )
+
+    expect_error(
+        .readContigs(
+            Contig_type = "manual",
+            Contig_folder_paths = NULL,
+            Contig_file_paths =
+                list.files(system.file("extdata/",
+                    package = "ECLIPSE"), full.names = TRUE)[1],
+            Verbose = TRUE
+        ),
+        "did not lead to any contigs being loaded in"
+    )
+
+    vignette_dir <- system.file("extdata/vignette", package = "ECLIPSE")
+    tcr_folder_paths <- list.dirs(path = vignette_dir, full.names = TRUE)[-1]
+
+    expect_s3_class(
+        .readContigs(
+            Contig_type = "all",
+            Contig_folder_paths = tcr_folder_paths,
+            Contig_file_paths = NULL,
+            Verbose = TRUE
+        ),
+        "data.frame"
+    )
+
+})
+
+
+
+test_that(".qcFilterContigs works correctly", {
+
+  expect_error(
+      .qcFilterContigs(
+          Contigs = output1[, 1:2],
+          Seurat_object = test_seurat,
+          Batch = "index",
+          Donor = "donor",
+          Group = "donor",
+          Original_barcode = "original_barcode",
+          Format = "Blank",
+          ReturnFilteredContigs = FALSE,
+          Verbose = TRUE
+      ),
+      "Contigs should be in a contigs format"
+  )
+
+  expect_error(
+      .qcFilterContigs(
+          Contigs = output1,
+          Seurat_object = test_seurat,
+          Batch = "index4",
+          Donor = "donor",
+          Group = "donor",
+          Original_barcode = "Cell_Barcode",
+          Format = "Blank",
+          ReturnFilteredContigs = FALSE,
+          Verbose = TRUE
+      ),
+      "Batch column name provided is not in the Seurat"
+  )
+
+  expect_error(
+      .qcFilterContigs(
+          Contigs = output1,
+          Seurat_object = test_seurat,
+          Batch = "index",
+          Donor = "donor2",
+          Group = "donor",
+          Original_barcode = "Cell_Barcode",
+          Format = "Blank",
+          ReturnFilteredContigs = FALSE,
+          Verbose = TRUE
+      ),
+      "Donor column name provided is not in the Seurat object"
+  )
+
+    expect_error(
+      .qcFilterContigs(
+          Contigs = output1,
+          Seurat_object = test_seurat,
+          Batch = "index",
+          Donor = "donor",
+          Group = "donor2",
+          Original_barcode = "Cell_Barcode",
+          Format = "Blank",
+          ReturnFilteredContigs = FALSE,
+          Verbose = TRUE
+      ),
+      "Group column name provided is not in the Seurat object"
+  )
+
+    expect_error(
+      .qcFilterContigs(
+          Contigs = output1,
+          Seurat_object = test_seurat,
+          Batch = "index",
+          Donor = "donor",
+          Group = "donor",
+          Original_barcode = "fake",
+          Format = "Blank",
+          ReturnFilteredContigs = FALSE,
+          Verbose = TRUE
+      ),
+      "Original barcode column name provided is not"
+  )
+
+    expect_error(
+      .qcFilterContigs(
+          Contigs = output1,
+          Seurat_object = test_seurat,
+          Batch = "index",
+          Donor = "donor",
+          Group = "donor",
+          Original_barcode = "Cell_Barcode",
+          Format = "fake",
+          ReturnFilteredContigs = FALSE,
+          Verbose = TRUE
+      ),
+      "None, none, or Blank not provided to format"
+  )
+
+  expect_error(
+      .qcFilterContigs(
+          Contigs = output1,
+          Seurat_object = test_seurat,
+          Batch = "index",
+          Donor = "donor",
+          Group = "donor",
+          Original_barcode = "Cell_Barcode",
+          Format = "Blank",
+          ReturnFilteredContigs = FALSE,
+          Verbose = 2
+      ),
+      "TRUE or FALSE not provided to verbose"
+  )
+
+  expect_error(
+      .qcFilterContigs(
+          Contigs = output1,
+          Seurat_object = test_seurat,
+          Batch = "index",
+          Donor = "donor",
+          Group = "donor",
+          Original_barcode = "Cell_Barcode",
+          Format = "Blank",
+          ReturnFilteredContigs = 2,
+          Verbose = TRUE
+      ),
+      "TRUE or FALSE not provided to returnFilteredContigs"
+  )
+
+  expect_true(
+      is.list(.qcFilterContigs(
+          Contigs = output1,
+          Seurat_object = test_seurat,
+          Batch = "index",
+          Donor = "donor",
+          Group = "donor",
+          Original_barcode = "Cell_Barcode",
+          Format = "Blank",
+          ReturnFilteredContigs = FALSE,
+          Verbose = TRUE
+      ))
+  )
+
+  ### This leads to no contigs being left, triggering the error
+  expect_error(
+      .qcFilterContigs(
+          Contigs = post_qc_contigs,
+          Seurat_object = test_seurat,
+          Batch = "index",
+          Donor = "donor",
+          Group = "donor",
+          Original_barcode = "Cell_Barcode",
+          Format = "Blank",
+          ReturnFilteredContigs = FALSE,
+          Verbose = TRUE
+      ),
+      "Check that your barcodes are the original"
+  )
+
+})
+
+
+test_that(".runVDJdive works correctly", {
+
+    expect_error(
+        .runVDJdive(
+            Contigs = contigs_post[,1:2],
+            Verbose = TRUE,
+            Donor = "donor"
+        ),
+        "Contigs should be in a contigs format and generated by"
+    )
+
+    expect_error(
+        .runVDJdive(
+            Contigs = contigs_post,
+            Verbose = 2,
+            Donor = "donor"
+        ),
+        "TRUE or FALSE not provided to verbose"
+    )
+
+    expect_true(
+        is.data.frame(.runVDJdive(
+            Contigs = contigs_post,
+            Verbose = TRUE,
+            Donor = "donor"
+        ))
+    )
+
+})
+
+
+
+test_that(".assignFinalClonotypes works correctly", {
+
+    expect_error(
+        .assignFinalClonotypes(
+            em_results = output3[,1:2],
+            Contigs = output2[[1]],
+            Seurat_object = output2[[2]],
+            Orphan_contigs = output2[[3]],
+            Donor = "donor",
+            Group = "donor",
+            CombineTcrArgs = list(FALSE, FALSE, FALSE, TRUE),
+            Verbose = TRUE
+        ),
+        "em_results should have 4 columns"
+    )
+
+    expect_error(
+        .assignFinalClonotypes(
+            em_results = output3,
+            Contigs = output2[[1]][,1:2],
+            Seurat_object = output2[[2]],
+            Orphan_contigs = output2[[3]],
+            Donor = "donor",
+            Group = "donor",
+            CombineTcrArgs = list(FALSE, FALSE, FALSE, TRUE),
+            Verbose = TRUE
+        ),
+        "Contigs should be in a contigs format"
+    )
+
+    expect_error(
+        .assignFinalClonotypes(
+            em_results = output3,
+            Contigs = output2[[1]],
+            Seurat_object = output2[[2]],
+            Orphan_contigs = output3,
+            Donor = "donor",
+            Group = "donor",
+            CombineTcrArgs = list(FALSE, FALSE, FALSE, TRUE),
+            Verbose = TRUE
+        ),
+        "Orphan_contigs should have 3 columns and be made by "
+    )
+
+    expect_error(
+        .assignFinalClonotypes(
+            em_results = output3,
+            Contigs = output2[[1]],
+            Seurat_object = output2[[2]],
+            Orphan_contigs = output2[[3]],
+            Donor = "donor2",
+            Group = "donor",
+            CombineTcrArgs = list(FALSE, FALSE, FALSE, TRUE),
+            Verbose = TRUE
+        ),
+        "Donor column name provided is not in the Seurat object"
+    )
+
+    expect_error(
+        .assignFinalClonotypes(
+            em_results = output3,
+            Contigs = output2[[1]],
+            Seurat_object = output2[[2]],
+            Orphan_contigs = output2[[3]],
+            Donor = "donor",
+            Group = "donor2",
+            CombineTcrArgs = list(FALSE, FALSE, FALSE, TRUE),
+            Verbose = TRUE
+        ),
+        "Group column name provided is not in the Seurat object"
+    )
+
+    expect_error(
+        .assignFinalClonotypes(
+            em_results = output3,
+            Contigs = output2[[1]],
+            Seurat_object = output2[[2]],
+            Orphan_contigs = output2[[3]],
+            Donor = "donor",
+            Group = "donor",
+            CombineTcrArgs = list(FALSE, FALSE, FALSE, 1),
+            Verbose = TRUE
+        ),
+        "Incorrect input to combineTcrArgs"
+    )
+
+    expect_error(
+        .assignFinalClonotypes(
+            em_results = output3,
+            Contigs = output2[[1]],
+            Seurat_object = output2[[2]],
+            Orphan_contigs = output2[[3]],
+            Donor = "donor",
+            Group = "donor",
+            CombineTcrArgs = list(FALSE, FALSE, FALSE, TRUE),
+            Verbose = 2
+        ),
+        "TRUE or FALSE not provided to verbose"
+    )
+
+    expect_s4_class(
+        .assignFinalClonotypes(
+            em_results = output3,
+            Contigs = output2[[1]],
+            Seurat_object = output2[[2]],
+            Orphan_contigs = output2[[3]],
+            Donor = "donor",
+            Group = "donor",
+            CombineTcrArgs = list(FALSE, FALSE, FALSE, TRUE),
+            Verbose = TRUE
+        ),
+        "Seurat"
+    )
+})
+
+
+output42 <- output4
+output42@meta.data <- output42@meta.data[, 1:2]
+
+
+test_that(".reformatSeuratObject works correctly", {
+
+    expect_error(
+        .reformatSeuratObject(
+            Seurat_object = output42,
+            Group = "donor",
+            DetailedEclipseStats = FALSE,
+            Verbose = TRUE
+        ),
+        "Seurat_object should be made by running"
+    )
+
+    expect_error(
+        .reformatSeuratObject(
+            Seurat_object = output4,
+            Group = "donor2",
+            DetailedEclipseStats = FALSE,
+            Verbose = TRUE
+        ),
+        "Group column name provided is not in the Seurat object"
+    )
+
+    expect_error(
+        .reformatSeuratObject(
+            Seurat_object = output4,
+            Group = "donor",
+            DetailedEclipseStats = 2,
+            Verbose = TRUE
+        ),
+        "TRUE or FALSE not provided to detailedEclipseStats"
+    )
+
+    expect_error(
+        .reformatSeuratObject(
+            Seurat_object = output4,
+            Group = "donor",
+            DetailedEclipseStats = FALSE,
+            Verbose = 2
+        ),
+        "TRUE or FALSE not provided to verbose"
+    )
+
+    expect_s4_class(
+        .reformatSeuratObject(
+            Seurat_object = output4,
+            Group = "donor",
+            DetailedEclipseStats = FALSE,
+            Verbose = TRUE
+        ),
+        "Seurat"
+    )
+
+})
+
+
+
+
+
+

@@ -4,7 +4,7 @@
 #' @format A data frame in the all_contig_annotations.csv format
 #' that is produced by cellranger vdj.
 #'
-#' @source This is from 10 cells taken from Braun et al., Cancer Cell, 2021, 
+#' @source This is from 10 cells taken from Braun et al., Cancer Cell, 2021,
 #' with doi 10.1016/j.ccell.2021.02.013. Please view the README file in inst/ for
 #' more information. Code to reproduce this is available in inst/scripts/.
 "post_qc_contigs"
@@ -13,7 +13,7 @@
 #'
 #' @format A Seurat object.
 #'
-#' @source This is from 10 cells taken from Braun et al., Cancer Cell, 2021, 
+#' @source This is from 10 cells taken from Braun et al., Cancer Cell, 2021,
 #' with doi 10.1016/j.ccell.2021.02.013. Please view the README file in inst/ for
 #' more information. Code to reproduce this is available in inst/scripts/.
 "test_seurat"
@@ -23,7 +23,7 @@
 #'
 #' @format A Seurat object.
 #'
-#' @source This is from 10 cells taken from Braun et al., Cancer Cell, 2021, 
+#' @source This is from 10 cells taken from Braun et al., Cancer Cell, 2021,
 #' with doi 10.1016/j.ccell.2021.02.013. Please view the README file in inst/ for
 #' more information. Code to reproduce this is available in inst/scripts/.
 "test_seurat_with_tcr"
@@ -32,7 +32,16 @@
 #'
 #' @format A Seurat object.
 #'
-#' @source This is from 1000 cells taken from Braun et al., Cancer Cell, 2021, 
+#' @source This is from 1000 cells taken from Braun et al., Cancer Cell, 2021,
 #' with doi 10.1016/j.ccell.2021.02.013. Please view the README file in inst/ for
 #' more information. Code to reproduce this is available in inst/scripts/.
 "vignette_object"
+
+#' Example small Seurat object without TCR information used for unit testing.
+#'
+#' @format A Seurat object.
+#'
+#' @source This is from 882 cells taken from Braun et al., Cancer Cell, 2021,
+#' with doi 10.1016/j.ccell.2021.02.013. Please view the README file in inst/ for
+#' more information. Code to reproduce this is available in inst/scripts/.
+"unit_test_object"

@@ -1,8 +1,8 @@
 #' @title Read TCR contigs
-#' 
+#'
 #' @description This internal function reads in TCR contigs and joins them.
 #' It is a helper function for ECLIPSE.
-#' 
+#'
 #' @param Contig_folder_paths vector of paths to directories that contain TCR
 #' files. If you use this argument, provide either "all" or "filtered" to
 #' contig_type. The order should match the numbers provided in batch.
@@ -16,7 +16,7 @@
 #' filtered_contig_annotations.csv format.
 #' @param Verbose specifies whether to print an important
 #' QC graph, a small table, and also notes through the pipeline.
-#' 
+#'
 #' @return A data.frame of all contigs
 .readContigs <- function(Contig_type,
                             Contig_folder_paths,
@@ -151,10 +151,10 @@
 
 
 #' @title QC filter contigs
-#' 
+#'
 #' @description This internal function filters contigs that do not pass QC.
 #' It is a helper function for ECLIPSE.
-#' 
+#'
 #' @param Contigs the TCR contigs data.frame made by .readContigs.
 #' @param Seurat_object Seurat object that contains scRNA-seq data.
 #' @param Batch name of column in Seurat meta.data. The column should contain
@@ -170,17 +170,17 @@
 #' contain the original 10X barcode for the cell. Typically this will end with
 #' -1, but users should check their TCR contig files to be sure.
 #' @param Format This tells how missing data is stored in
-#' the TCR contig files. Current files likely contain "", but if older contig 
-#' files are used where any missing data is stored 
+#' the TCR contig files. Current files likely contain "", but if older contig
+#' files are used where any missing data is stored
 #' as "None", then "None" should be provided here.
 #' @param ReturnFilteredContigs specifies if filtered contigs should be returned
 #' instead of running the whole ECLIPSE pipeline.
 #' @param Verbose specifies whether to print an important
 #' QC graph, a small table, and also notes through the pipeline.
-#' 
+#'
 #' @return A list of 3, with the filtered contigs first, the seurat object,
-#' then contigs that are only seen in one cell aka orphan contigs. 
-#' Alternatively, if ReturnFilteredContigs == TRUE, then just the contigs are 
+#' then contigs that are only seen in one cell aka orphan contigs.
+#' Alternatively, if ReturnFilteredContigs == TRUE, then just the contigs are
 #' returned.
 .qcFilterContigs <- function(Contigs,
                                 Seurat_object,
@@ -466,18 +466,18 @@
 
 
 #' @title Run VDJdive
-#' 
-#' @description This internal function runs the EM algorithm of VDJdive and 
-#' extracts the results from the assignment matrix. It is a helper function 
+#'
+#' @description This internal function runs the EM algorithm of VDJdive and
+#' extracts the results from the assignment matrix. It is a helper function
 #' for ECLIPSE.
-#' 
-#' @param Contigs TCR contigs made from .qcFilterContigs and 
+#'
+#' @param Contigs TCR contigs made from .qcFilterContigs and
 #' findThreeChainClones.
 #' @param Donor name of column in Seurat meta.data. The column should contain
 #' the donor, regardless of treatment/timepoint/condition.
 #' @param Verbose specifies whether to print an important
 #' QC graph, a small table, and also notes through the pipeline.
-#' 
+#'
 #' @return A data.frame describing the results from the EM algorithm.
 .runVDJdive <- function(Contigs,
                         Verbose,
@@ -589,12 +589,12 @@
 
 
 #' @title Assign final clonotypes
-#' 
-#' @description This internal function determines and adds the final EM-based 
-#' clonotype to the Seurat object. It also adds the chains that were detected 
-#' and how the cell would have been called with standard analysis. It is a 
+#'
+#' @description This internal function determines and adds the final EM-based
+#' clonotype to the Seurat object. It also adds the chains that were detected
+#' and how the cell would have been called with standard analysis. It is a
 #' helper function for ECLIPSE.
-#' 
+#'
 #' @param em_results the results from running .runVDJdive.
 #' @param Contigs post-QC filtered contigs.
 #' @param Orphan_contigs orphan TCR contigs determined by .qcFilterContigs.
@@ -613,7 +613,7 @@
 #' using these arguments will determine the final clonotype.
 #' @param Verbose specifies whether to print an important
 #' QC graph, a small table, and also notes through the pipeline.
-#' 
+#'
 #' @return A Seurat object with the clonotype information added.
 .assignFinalClonotypes <- function(em_results,
                                     Contigs,
@@ -647,7 +647,7 @@
 
     if (ncol(Orphan_contigs) != 3 | sum(colnames(Orphan_contigs) %in%
         c("barcode", "chain", "cdr3")) != 3) {
-        stop("Oprhan_contigs should have 3 columns and be made by ",
+        stop("Orphan_contigs should have 3 columns and be made by ",
             ".qcFilterContigs. Please try again.")
     }
 
@@ -971,11 +971,11 @@
 
 
 #' @title Reformat Seurat object
-#' 
-#' @description This internal function renames columns in the Seurat 
-#' meta.data, removes unneeded columns, and formats the columns for use with 
+#'
+#' @description This internal function renames columns in the Seurat
+#' meta.data, removes unneeded columns, and formats the columns for use with
 #' scRepertoire downstream. It is a helper function for ECLIPSE.
-#' 
+#'
 #' @param Seurat_object Seurat object that contains scRNA-seq data.
 #' @param Group name of column in Seurat meta.data. This column should specify
 #' how the final statistics for each clone should be calculated. For example,
@@ -985,8 +985,8 @@
 #' relating to EM assignment in Seurat meta.data for each cell if TRUE.
 #' @param Verbose specifies whether to print an important
 #' QC graph, a small table, and also notes through the pipeline.
-#' 
-#' @return A Seurat object that is properly formatted and has all TCR 
+#'
+#' @return A Seurat object that is properly formatted and has all TCR
 #' information added.
 .reformatSeuratObject <- function(Seurat_object,
                                     Group,
