@@ -594,6 +594,24 @@ test_that("findThreeChainClones returns correct outputs", {
             )
         )
     )
+
+    expect_true(
+        sum(colnames(findThreeChainClones(post_qc_contigs,
+            chain = "a",
+            mode = "show",
+            printStats = TRUE)[[1]]
+        ) %in% c("monotypic_chain", "predicted_bitypic_pairing")) == 2
+    )
+
+    expect_true(
+        sum(colnames(findThreeChainClones(post_qc_contigs,
+            chain = "a",
+            mode = "show",
+            printStats = TRUE)[[2]]
+        ) %in% c("total_cells", "cell_counts_per_bitypic_pairing")) == 2
+    )
+
+
 })
 
 
@@ -1016,65 +1034,108 @@ test_that(".qcFilterContigs works correctly", {
       "None, none, or Blank not provided to format"
   )
 
-  expect_error(
-      .qcFilterContigs(
-          Contigs = output1,
-          Seurat_object = test_seurat,
-          Batch = "index",
-          Donor = "donor",
-          Group = "donor",
-          Original_barcode = "Cell_Barcode",
-          Format = "Blank",
-          ReturnFilteredContigs = FALSE,
-          Verbose = 2
-      ),
-      "TRUE or FALSE not provided to verbose"
-  )
+    expect_error(
+        .qcFilterContigs(
+            Contigs = output1,
+            Seurat_object = test_seurat,
+            Batch = "index",
+            Donor = "donor",
+            Group = "donor",
+            Original_barcode = "Cell_Barcode",
+            Format = "Blank",
+            ReturnFilteredContigs = FALSE,
+            Verbose = 2
+        ),
+        "TRUE or FALSE not provided to verbose"
+    )
 
-  expect_error(
-      .qcFilterContigs(
-          Contigs = output1,
-          Seurat_object = test_seurat,
-          Batch = "index",
-          Donor = "donor",
-          Group = "donor",
-          Original_barcode = "Cell_Barcode",
-          Format = "Blank",
-          ReturnFilteredContigs = 2,
-          Verbose = TRUE
-      ),
-      "TRUE or FALSE not provided to returnFilteredContigs"
-  )
+    expect_error(
+        .qcFilterContigs(
+            Contigs = output1,
+            Seurat_object = test_seurat,
+            Batch = "index",
+            Donor = "donor",
+            Group = "donor",
+            Original_barcode = "Cell_Barcode",
+            Format = "Blank",
+            ReturnFilteredContigs = 2,
+            Verbose = TRUE
+        ),
+        "TRUE or FALSE not provided to returnFilteredContigs"
+    )
 
-  expect_true(
-      is.list(.qcFilterContigs(
-          Contigs = output1,
-          Seurat_object = test_seurat,
-          Batch = "index",
-          Donor = "donor",
-          Group = "donor",
-          Original_barcode = "Cell_Barcode",
-          Format = "Blank",
-          ReturnFilteredContigs = FALSE,
-          Verbose = TRUE
-      ))
-  )
+    expect_true(
+        is.list(.qcFilterContigs(
+            Contigs = output1,
+            Seurat_object = test_seurat,
+            Batch = "index",
+            Donor = "donor",
+            Group = "donor",
+            Original_barcode = "Cell_Barcode",
+            Format = "Blank",
+            ReturnFilteredContigs = FALSE,
+            Verbose = TRUE
+        ))
+    )
 
-  ### This leads to no contigs being left, triggering the error
-  expect_error(
-      .qcFilterContigs(
-          Contigs = post_qc_contigs,
-          Seurat_object = test_seurat,
-          Batch = "index",
-          Donor = "donor",
-          Group = "donor",
-          Original_barcode = "Cell_Barcode",
-          Format = "Blank",
-          ReturnFilteredContigs = FALSE,
-          Verbose = TRUE
-      ),
-      "Check that your barcodes are the original"
-  )
+    expect_true(
+        sum(colnames(.qcFilterContigs(
+            Contigs = output1,
+            Seurat_object = test_seurat,
+            Batch = "index",
+            Donor = "donor",
+            Group = "donor",
+            Original_barcode = "Cell_Barcode",
+            Format = "Blank",
+            ReturnFilteredContigs = FALSE,
+            Verbose = TRUE)[[1]])
+        %in% c("barcode", "reads", "cdr3", "chainTypes", "cdr1")) == 5
+    )
+
+    expect_s4_class(
+        .qcFilterContigs(
+            Contigs = output1,
+            Seurat_object = test_seurat,
+            Batch = "index",
+            Donor = "donor",
+            Group = "donor",
+            Original_barcode = "Cell_Barcode",
+            Format = "Blank",
+            ReturnFilteredContigs = FALSE,
+            Verbose = TRUE
+        )[[2]],
+        "Seurat"
+    )
+
+    expect_true(
+        sum(colnames(.qcFilterContigs(
+            Contigs = output1,
+            Seurat_object = test_seurat,
+            Batch = "index",
+            Donor = "donor",
+            Group = "donor",
+            Original_barcode = "Cell_Barcode",
+            Format = "Blank",
+            ReturnFilteredContigs = FALSE,
+            Verbose = TRUE)[[3]])
+        %in% c("barcode", "chain", "cdr3")) == 3
+    )
+
+    ### This leads to no contigs being left, triggering the error
+    expect_error(
+        .qcFilterContigs(
+            Contigs = post_qc_contigs,
+            Seurat_object = test_seurat,
+            Batch = "index",
+            Donor = "donor",
+            Group = "donor",
+            Original_barcode = "Cell_Barcode",
+            Format = "Blank",
+            ReturnFilteredContigs = FALSE,
+            Verbose = TRUE
+        ),
+        "Check that your barcodes are the original"
+    )
 
 })
 
@@ -1288,5 +1349,286 @@ test_that(".reformatSeuratObject works correctly", {
 
 
 
+### Prepping inputs for findThreeChainClones helper functions
+contigs <- post_qc_contigs
+chain <- "a"
+mode = "standard"
+printStats = TRUE
+
+output1 <- .identifyThreeChainClones(Contigs = contigs,
+                                     Chain = chain,
+                                     Mode = mode)
+
+
+output2 <- .modifyThreeChainContigs(Contigs = contigs,
+                                    three_chain_clones = output1[[1]],
+                                    Clones = output1[[2]],
+                                    Chain = chain,
+                                    Mode = mode)
+
+output3 <- .findMissingMonotypicChains(Contigs = output2,
+                                       specialTCRs = output1[[3]],
+                                       Chain = chain,
+                                       Mode = mode,
+                                       print_stats = printStats)
+
+contigs2 <- ECLIPSE(
+    contig_file_paths = unit_test_tcr_paths,
+    contig_type = "manual",
+    seurat_object = unit_test_object,
+    batch = "index",
+    donor = "donor",
+    group = "donor",
+    original_barcode = "Cell_Barcode",
+    detailedEclipseStats = FALSE,
+    combineTcrArgs = list(FALSE, FALSE, FALSE, TRUE),
+    allowDoubleChains = "both",
+    verbose = TRUE,
+    returnFilteredContigs = TRUE
+)
+
+output12 <- .identifyThreeChainClones(Contigs = contigs2,
+                                     Chain = chain,
+                                     Mode = mode)
+
+
+test_that(".identifyThreeChainClones is working correctly", {
+
+    expect_error(
+        .identifyThreeChainClones(
+            Contigs = post_qc_contigs[, 1:2],
+            Chain = "a",
+            Mode = "standard"
+        ),
+        "Contigs should be in the all_contig_annotations or"
+    )
+
+    expect_error(
+        .identifyThreeChainClones(
+            Contigs = post_qc_contigs,
+            Chain = "c",
+            Mode = "standard"
+        ),
+        "Chain should be a or b"
+    )
+
+    expect_error(
+        .identifyThreeChainClones(
+            Contigs = post_qc_contigs,
+            Chain = "a",
+            Mode = "fake"
+        ),
+        "Mode must be standard or show"
+    )
+
+    expect_true(
+        is.list(
+            .identifyThreeChainClones(
+                Contigs = post_qc_contigs,
+                Chain = "a",
+                Mode = "standard"
+            )
+        ),
+        "Contigs should be in the all_contig_annotations or"
+    )
+
+    expect_true(
+        sum(colnames(
+            .identifyThreeChainClones(
+                Contigs = post_qc_contigs,
+                Chain = "a",
+                Mode = "standard")[[1]])
+            %in% c("monotypic", "combo")) == 2
+    )
+
+    expect_true(
+        sum(colnames(
+            .identifyThreeChainClones(
+                Contigs = post_qc_contigs,
+                Chain = "a",
+                Mode = "standard")[[2]])
+            %in% c("barcode", "TCR1", "CTgene", "CTaa", "CTstrict")) == 5
+    )
+
+    expect_true(
+        is.vector(
+            .identifyThreeChainClones(
+                Contigs = post_qc_contigs,
+                Chain = "a",
+                Mode = "standard")[[3]]
+        )
+    )
+
+    expect_message(
+        .identifyThreeChainClones(
+            Contigs = post_qc_contigs,
+            Chain = "b",
+            Mode = "show"
+        ),
+        "Returning a list. The first table shows all"
+    )
+})
+
+
+
+
+
+test_that(".modifyThreeChainContigs works correctly", {
+
+    expect_error(
+        .modifyThreeChainContigs(
+            Contigs = post_qc_contigs[, 1:2],
+            three_chain_clones = output1[[1]],
+            Clones = output1[[2]],
+            Chain = "a",
+            Mode = "standard"
+        ),
+        "Contigs should be in the all_contig_annotations or"
+    )
+
+    expect_error(
+        .modifyThreeChainContigs(
+            Contigs = post_qc_contigs,
+            three_chain_clones = output1[[1]],
+            Clones = output1[[2]],
+            Chain = "c",
+            Mode = "standard"
+        ),
+        "Chain should be a or b"
+    )
+
+    expect_error(
+        .modifyThreeChainContigs(
+            Contigs = post_qc_contigs,
+            three_chain_clones = output1[[1]],
+            Clones = output1[[2]],
+            Chain = "a",
+            Mode = "fake"
+        ),
+        "Mode must be standard or show"
+    )
+
+    expect_error(
+        .modifyThreeChainContigs(
+            Contigs = post_qc_contigs,
+            three_chain_clones = output1[[1]][, 1],
+            Clones = output1[[2]],
+            Chain = "a",
+            Mode = "standard"
+        ),
+        "three_chain_clones should have 2 columns named combo and"
+    )
+
+    expect_error(
+        .modifyThreeChainContigs(
+            Contigs = post_qc_contigs,
+            three_chain_clones = output1[[1]],
+            Clones = output1[[2]][, 1:2],
+            Chain = "a",
+            Mode = "standard"
+        ),
+        "Clones should have 13 columns and it should be generated by"
+    )
+
+    expect_true(
+        is.null(
+            .modifyThreeChainContigs(
+                Contigs = contigs2,
+                three_chain_clones = output12[[1]],
+                Clones = output12[[2]],
+                Chain = "a",
+                Mode = "show"
+            )
+        )
+    )
+
+    expect_s3_class(
+        .modifyThreeChainContigs(
+            Contigs = post_qc_contigs,
+            three_chain_clones = output1[[1]],
+            Clones = output1[[2]],
+            Chain = "a",
+            Mode = "standard"
+        ),
+        "tbl_df"
+    )
+
+})
+
+
+
+test_that(".findMissingMonotypicChains works correctly", {
+
+    expect_error(
+        .findMissingMonotypicChains(Contigs = output2[, 1:2],
+            specialTCRs = output1[[3]],
+            Chain = "a",
+            Mode = "standard",
+            print_stats = TRUE
+        ),
+        "Contigs should be in the all_contig_annotations or"
+    )
+
+    expect_error(
+        .findMissingMonotypicChains(Contigs = output2,
+            specialTCRs = output1[[3]],
+            Chain = "c",
+            Mode = "standard",
+            print_stats = TRUE
+        ),
+        "Chain should be a or b"
+    )
+
+    expect_error(
+        .findMissingMonotypicChains(Contigs = output2,
+            specialTCRs = output1[[3]],
+            Chain = "a",
+            Mode = "fake",
+            print_stats = TRUE
+        ),
+        "Mode must be standard or show"
+    )
+
+    expect_error(
+        .findMissingMonotypicChains(Contigs = output2,
+            specialTCRs = list(output1[[3]]),
+            Chain = "a",
+            Mode = "standard",
+            print_stats = TRUE
+        ),
+        "specialTCRs must be a character vector"
+    )
+
+    expect_error(
+        .findMissingMonotypicChains(Contigs = output2,
+            specialTCRs = output1[[3]],
+            Chain = "a",
+            Mode = "standard",
+            print_stats = 2
+        ),
+        "printStats must be TRUE or FALSE"
+    )
+
+    expect_true(
+        is.null(
+            .findMissingMonotypicChains(Contigs = output2,
+                specialTCRs = output1[[3]],
+                Chain = "a",
+                Mode = "show",
+                print_stats = TRUE
+            )
+        )
+    )
+
+    expect_s3_class(
+        .findMissingMonotypicChains(Contigs = output2,
+            specialTCRs = output1[[3]],
+            Chain = "a",
+            Mode = "standard",
+            print_stats = TRUE
+        ),
+        "tbl_df"
+    )
+})
 
 

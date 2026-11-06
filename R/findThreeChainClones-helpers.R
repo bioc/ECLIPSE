@@ -244,7 +244,7 @@
 
         if (nrow(pairings2) > 0) {
             if (max(pairings2$combos) > 1) {
-                warning("Muliple combos with a beta remain")
+                warning("Muliple bitypics with a monotypic remain")
             }
         }
         combos <- pairings2 %>%
