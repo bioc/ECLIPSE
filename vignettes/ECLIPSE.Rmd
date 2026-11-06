@@ -77,8 +77,7 @@ to a Seurat object. For example, a SingleCellExperiment object could be used.
 For more details on this conversion and an example, please see the 
 supplemental information section.
 
-## How is ECLIPSE different from other Bioconductor and non-Bioconductor 
-## scTCR-seq analysis packages?
+## How is ECLIPSE different from other Bioconductor and non-Bioconductor scTCR-seq analysis packages?
 
 ECLIPSE has similarities with other scTCR-seq analysis packages, but it also 
 has many differences. Like many other packages, it defines individual TCR
@@ -175,7 +174,7 @@ filtered contig files remove some biologically true contigs (ex.
 TCRα chains that use the TRDV1 gene segment, [see here](
 https://doi.org/10.3389/fimmu.2023.1286688)) as well as non-productive 
 contigs. While these non-productive chains may not influence T cell antigen 
-specificity, their presence in the contig files allows for enhanced fidelity  
+specificity, their presence in the contig files allows for enhanced fidelity 
 of clonal tracking by `ECLIPSE`.
 
 To feed the contig files into `ECLIPSE`, there are two options:
@@ -225,8 +224,8 @@ scRNA-seq analysis pipelines add prefixes/suffixes to cell barcodes, this
 column is required so that the TCR contigs (which contain the original 10X
 barcodes) can be matched to their respective cell in the Seurat object. 
 Typically, barcodes will end with -1, but this may not always be true, such 
-as if `cellranger aggr` was used. Always check your raw contig and counts 
-files to be sure! 
+as if `cellranger aggr` was used. Always check your raw contig and 
+barcodes.tsv files to be sure! 
 
 For our dataset, the raw contig files have cell barcode suffixes of -1, so 
 let's look at the barcodes in our Seurat object to see if they will match:
@@ -257,17 +256,17 @@ contig_paths
 
 For example, `contig_paths[2]` holds a path for the TCR contigs for a cells
 from the tumor of S15, so any cell from that sample must have 2 
-(integer) but not "2" (character) in this new column. We can make this column, 
+(numeric) but not "2" (character) in this new column. We can make this column, 
 here called `index`, as such:
 ```{r makeBatchColumn}
 # Since normal tissue from sample 15 is first (S15N), it is 1.
 # Tumor tissue from 15 is next (S15T), so it is 2, etc...
 vignette_object[[]] <- vignette_object[[]] %>% 
-                           mutate(index = case_when(
-                               Sample == "S15_N" ~ 1,
-                               Sample == "S15_T" ~ 2,
-                               Sample == "S3_N" ~ 3,
-                               Sample == "S3_T" ~ 4))
+                       mutate(index = case_when(
+                                                Sample == "S15_N" ~ 1,
+                                                Sample == "S15_T" ~ 2,
+                                                Sample == "S3_N" ~ 3,
+                                                Sample == "S3_T" ~ 4))
     
 # Checking the column
 table(vignette_object$index)
@@ -289,7 +288,7 @@ table(vignette_object$donor)
 
 ### Column to pass to `group`
 Lastly, we need to tell `ECLIPSE` how we want the final clonal statistics 
-(i.e. clone cell count, frequency, etc..) to be calculated after clones are 
+(e.g. clone cell count, frequency, etc..) to be calculated after clones are 
 called. For our example, either S15/S3 or S3T/S3N/S15T/S15N would be equally 
 valid. If a clone is only 1 cell, then if we provide the donor, the 
 frequency will be 1/500 vs. if we provide the sample, then it will be
@@ -309,7 +308,7 @@ Now we are ready to run the `ECLIPSE` function to analyze our scTCR-seq data.
 Briefly, this function does the following:
 
 1. Reading in contig data
-2. Filtering contigs (i.e. must be in Seurat, high_confidence, not duplicated,
+2. Filtering contigs (e.g. must be in Seurat, high_confidence, not duplicated,
 TCRα or TCRβ, have a valid CDR3, etc...)
 3. Calling `findThreeChainClones` to find clones with biological expression of 
 3 total TCR chains and modifying the contigs to address this
@@ -501,11 +500,11 @@ new_seurat$cell_barcode <- str_replace(rownames(new_seurat[[]]),
 
 #3: Make a column to pass to batch
 new_seurat[[]] <- new_seurat[[]] %>% 
-    mutate(index = case_when(
-        Sample == "S15_N" ~ 1,
-        Sample == "S15_T" ~ 2,
-        Sample == "S3_N" ~ 3,
-        Sample == "S3_T" ~ 4))
+                  mutate(index = case_when(
+                                           Sample == "S15_N" ~ 1,
+                                           Sample == "S15_T" ~ 2,
+                                           Sample == "S3_N" ~ 3,
+                                           Sample == "S3_T" ~ 4))
 
 #4: Make a column to pass to donor (already done for us here)
 table(new_seurat$donor)
@@ -542,26 +541,25 @@ metadata columns that are added by `ECLIPSE`.
 It is possible that this approach may lead to the loss of some information 
 other than cell metadata due to the conversion functions not being able to 
 transfer all elements of the objects between types. To prevent this, you can 
-also manually extract the `Seurat` meta.data columns of interest before  
+also manually extract the `Seurat` meta.data columns of interest before 
 analyzing them separately or joining them back to the original object. This 
 preserves the original object and only adds the metadata columns that are 
 desired. For example:
 ```{r returnToSceObject2}
 ### Extract meta.data
-tcr_meta <- new_seurat_with_tcr[[]] %>%
-    select(Cell_barcode,
-        highConfChains,
-        scR_CTaa,
-        CTaa,
-        clonalProportion,
-        clonalFrequency,
-        cloneSize,
-        cloneCallSource)
+tcr_meta <- new_seurat_with_tcr[[]] %>% select(Cell_barcode,
+                                               highConfChains,
+                                               scR_CTaa,
+                                               CTaa,
+                                               clonalProportion,
+                                               clonalFrequency,
+                                               cloneSize,
+                                               cloneCallSource)
 
 ### Join with original meta.data
 new_meta <- as.data.frame(colData(sce_obj)) %>%
-    left_join(tcr_meta, by = "Cell_barcode") %>%
-    column_to_rownames("Cell_barcode")
+            left_join(tcr_meta, by = "Cell_barcode") %>%
+            column_to_rownames("Cell_barcode")
 
 ### Add joined meta.data to original object
 colData(sce_obj) <- S4Vectors::DataFrame(new_meta)
@@ -659,7 +657,7 @@ descriptions <- c(
     ),
     paste(
         "By default `FALSE`. This adds information about the EM algorithm",
-        "assignment to the Seurat object (i.e. what proportion of the cell",
+        "assignment to the Seurat object (e.g. what proportion of the cell",
         "was assigned to the clone listed, etc...)"
     ),
     paste(
