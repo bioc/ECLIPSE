@@ -875,7 +875,7 @@
     type <- c("alpha", "beta")
     opposite_type <- c("beta", "alpha")
 
-    for (i in 1:2) {
+    for (i in seq_len(2)) {
 
         custom <- obj@meta.data %>%
             filter(!is.na(.data$CTaa) & !is.na(.data[[donor]]) &

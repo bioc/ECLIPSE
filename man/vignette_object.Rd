@@ -9,11 +9,11 @@ A Seurat object.
 }
 \source{
 This is from 1000 cells taken from Braun et al., Cancer Cell, 2021,
-with doi 10.1016/j.ccell.2021.02.013. Please view the README file in inst/ for
-more information. Code to reproduce this is available in inst/scripts/.
+with doi 10.1016/j.ccell.2021.02.013. Please view the README file in inst/
+for more information. Code to reproduce this is available in inst/scripts/.
 }
 \usage{
-vignette_object
+data(vignette_object)
 }
 \description{
 Example small Seurat object without TCR information.

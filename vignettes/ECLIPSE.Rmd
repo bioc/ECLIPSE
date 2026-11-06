@@ -77,7 +77,8 @@ to a Seurat object. For example, a SingleCellExperiment object could be used.
 For more details on this conversion and an example, please see the 
 supplemental information section.
 
-## How is ECLIPSE different from other Bioconductor and non-Bioconductor scTCR-seq analysis packages?
+## How is ECLIPSE different from other Bioconductor and non-Bioconductor 
+## scTCR-seq analysis packages?
 
 ECLIPSE has similarities with other scTCR-seq analysis packages, but it also 
 has many differences. Like many other packages, it defines individual TCR
@@ -122,7 +123,8 @@ library(tidyverse) # needed for data wrangling (or use base R instead)
 library(scRepertoire) # needed for downstream analysis
 ```
 
-Please use the following code to download `ECLIPSE` from Bioconductor and load it:
+Please use the following code to download `ECLIPSE` from Bioconductor and 
+load it:
 ```{r githubInstall, eval = FALSE}
 if (!require("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
@@ -134,7 +136,8 @@ BiocManager::install("ECLIPSE")
 library(ECLIPSE)
 ```
 
-Alternatively, use the following code to download the devel version of `ECLIPSE` from GitHub and load it:
+Alternatively, use the following code to download the devel version of 
+`ECLIPSE` from GitHub and load it:
 ```{r githubInstallDevel, eval = FALSE}
 remotes::install_github("eburns10/ECLIPSE")
 ```
@@ -466,7 +469,7 @@ Here we will show how this looks using Bioconductor's preferred format,
 the `SingleCellExperiment` object.
 
 First, we load our required packages:
-```{r, loadScePackage, results = "hide", message = FALSE, warning = FALSE}
+```{r loadScePackage, results = "hide", message = FALSE, warning = FALSE}
 library(SingleCellExperiment)
 library(Seurat)
 ```
@@ -480,13 +483,13 @@ sce_obj <- as.SingleCellExperiment(vignette_object)
 We can use the `as.Seurat` function here. The argument `data = NULL` is needed 
 since our `SingleCellExperiment` object doesn't have a logcounts assay, 
 but this may not always be the case.
-```{r, convertToSeurat}
+```{r convertToSeurat}
 new_seurat <- as.Seurat(sce_obj, data = NULL)
 ```
 
 ### Step 2: Run `ECLIPSE`
 This is identical to the standard approach.
-```{r, runECLIPSE}
+```{r runECLIPSE}
 # 1: Get contig folder paths
 vignette_dir <- system.file("extdata/vignette", package = "ECLIPSE")
 tcr_folder_paths <- list.dirs(path = vignette_dir, full.names = TRUE)[-1]
@@ -524,7 +527,7 @@ new_seurat_with_tcr <- ECLIPSE(contig_type = "all",
 ### Step 3: Convert back to old format or extract columns of interest and merge
 The easiest way to return back to the original object is by simply converting 
 the Seurat object back to the starting object type. For example:
-```{r, returnToSceObject}
+```{r returnToSceObject}
 sce_obj_with_tcr <- as.SingleCellExperiment(new_seurat_with_tcr)
 
 ### Check original column names in SingleCellExperiment objects
@@ -543,7 +546,7 @@ also manually extract the `Seurat` meta.data columns of interest before
 analyzing them separately or joining them back to the original object. This 
 preserves the original object and only adds the metadata columns that are 
 desired. For example:
-```{r, returnToSceObject2}
+```{r returnToSceObject2}
 ### Extract meta.data
 tcr_meta <- new_seurat_with_tcr[[]] %>%
     select(Cell_barcode,

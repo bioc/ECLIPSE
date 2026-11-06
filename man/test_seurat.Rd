@@ -9,11 +9,11 @@ A Seurat object.
 }
 \source{
 This is from 10 cells taken from Braun et al., Cancer Cell, 2021,
-with doi 10.1016/j.ccell.2021.02.013. Please view the README file in inst/ for
-more information. Code to reproduce this is available in inst/scripts/.
+with doi 10.1016/j.ccell.2021.02.013. Please view the README file in inst/
+for more information. Code to reproduce this is available in inst/scripts/.
 }
 \usage{
-test_seurat
+data(test_seurat)
 }
 \description{
 Example minimal Seurat object without TCR information.
