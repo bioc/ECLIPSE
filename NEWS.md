@@ -1,3 +1,7 @@
+# ECLIPSE 0.99.2
+
+* Updated documentation for exported data
+
 # ECLIPSE 0.99.1
 
 * Rewrote functions to move code to helper functions
