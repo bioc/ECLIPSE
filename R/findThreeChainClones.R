@@ -78,8 +78,8 @@ findThreeChainClones <- function(contigs,
 
 
         output1 <- .identifyThreeChainClones(Contigs = contigs,
-                                             Chain = chain,
-                                             Mode = mode)
+            Chain = chain,
+            Mode = mode)
 
         if (mode == "show") {
             return(output1)
@@ -92,10 +92,10 @@ findThreeChainClones <- function(contigs,
                                             Mode = mode)
 
         output3 <- .findMissingMonotypicChains(Contigs = output2,
-                                               specialTCRs = output1[[3]],
-                                               Chain = chain,
-                                               Mode = mode,
-                                               print_stats = printStats)
+            specialTCRs = output1[[3]],
+            Chain = chain,
+            Mode = mode,
+            print_stats = printStats)
 
         if (mode == "standard") {
             return(output3)

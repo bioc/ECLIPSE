@@ -531,10 +531,10 @@ the Seurat object back to the starting object type. For example:
 sce_obj_with_tcr <- as.SingleCellExperiment(new_seurat_with_tcr)
 
 ### Check original column names in SingleCellExperiment objects
-colnames(sce_obj@colData)
+colnames(colData(sce_obj))
 
 ### Check new column names in SingleCellExperiment object
-colnames(sce_obj_with_tcr@colData)
+colnames(colData(sce_obj_with_tcr))
 ```
 As you can see, our starting object now has TCR information and all
 metadata columns that are added by `ECLIPSE`.
@@ -567,7 +567,7 @@ new_meta <- as.data.frame(colData(sce_obj)) %>%
 colData(sce_obj) <- S4Vectors::DataFrame(new_meta)
 
 ### Check to confirm TCR data is now present
-colnames(sce_obj@colData)
+colnames(colData(sce_obj))
 ```
 
 

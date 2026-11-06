@@ -146,9 +146,9 @@ ECLIPSE <- function(seurat_object,
     }
 
     if (sum((seurat_object@meta.data[[batch]] %% 1) != 0) |
-       1 %in% seurat_object@meta.data[[batch]] == FALSE ) {
-       stop("Batch column must contain whole numbers and start with 1. ",
-           "Please try again.")
+        1 %in% seurat_object@meta.data[[batch]] == FALSE ) {
+        stop("Batch column must contain whole numbers and start with 1. ",
+            "Please try again.")
     }
 
     if (!donor %in% colnames(seurat_object@meta.data)) {
@@ -244,7 +244,7 @@ ECLIPSE <- function(seurat_object,
                                 Verbose = verbose)
 
     if (returnFilteredContigs == TRUE) {
-      return(output2)
+        return(output2)
     }
 
 
@@ -295,17 +295,17 @@ ECLIPSE <- function(seurat_object,
 
 
     output3 <- .runVDJdive(Contigs = contigs_post,
-                           Donor = donor,
-                           Verbose = verbose)
+        Donor = donor,
+        Verbose = verbose)
 
     output4 <- .assignFinalClonotypes(em_results = output3,
-                                      Contigs = output2[[1]],
-                                      Seurat_object = output2[[2]],
-                                      Orphan_contigs = output2[[3]],
-                                      Donor = donor,
-                                      Group = group,
-                                      CombineTcrArgs = combineTcrArgs,
-                                      Verbose = verbose)
+        Contigs = output2[[1]],
+        Seurat_object = output2[[2]],
+        Orphan_contigs = output2[[3]],
+        Donor = donor,
+        Group = group,
+        CombineTcrArgs = combineTcrArgs,
+        Verbose = verbose)
 
     output5 <- .reformatSeuratObject(Seurat_object = output4,
         Group = group,
