@@ -151,11 +151,11 @@ require(knitr)
 
 
 # Test dataset
-ECLIPSE includes a small test dataset of 1,000 cells from 2 patients (S3 and
-S15) with clear cell renal cell carcinoma (derived from [Braun et al., 2021](
-https://doi.org/10.1016/j.ccell.2021.02.013)). Each patient has two samples: 
-one from tumor tissue and one from matched adjacent normal tissue. To load the
-dataset in, we can use the following code:
+ECLIPSE includes a small test dataset of 1,000 cells from 2 patients (D3 and
+D5) with COVID-19 (derived from [Zhao et al., 2021](
+https://doi.org/10.1126/sciimmunol.abf6692)). Each patient has two samples: 
+one from peripheral blood and one from matched bronchoalveolar lavage fluid 
+(BALF) from the lung. To load the dataset in, we can use the following code:
 ```{r loadSeuratObject}
 data("vignette_object", package = "ECLIPSE")
 ```
@@ -223,25 +223,26 @@ This column must contain the original 10X barcode for each cell. Because many
 scRNA-seq analysis pipelines add prefixes/suffixes to cell barcodes, this 
 column is required so that the TCR contigs (which contain the original 10X
 barcodes) can be matched to their respective cell in the Seurat object. 
-Typically, barcodes will end with -1, but this may not always be true, such 
-as if `cellranger aggr` was used. Always check your raw contig and 
-barcodes.tsv files to be sure! 
+Typically, barcodes will end with -1 and have no prefixes, but this may not 
+always be true, such as if `cellranger aggr` was used. Always check your raw 
+contig and barcodes.tsv files to be sure! 
 
-For our dataset, the raw contig files have cell barcode suffixes of -1, so 
-let's look at the barcodes in our Seurat object to see if they will match:
+For our dataset, the raw contig files have cell barcode suffixes of -1 with no 
+prefix, so let's look at the barcodes in our Seurat object to see if they will 
+match:
 ```{r checkBarcodes}
 # Existing cell barcodes. They aren't the original!
 head(rownames(vignette_object[[]]))
 ```
 
-As you can see, they do not match. Let's change the suffixes to -1 and make a 
+As you can see, they do not match. Let's remove the prefix and make a 
 new column called `cell_barcode` that we can pass to the `original_barcode` 
 argument of ECLIPSE:
 ```{r makeBarcodeColumn}
 # Making a column with these barcodes where the suffix is -1
 vignette_object$cell_barcode <- str_replace(rownames(vignette_object[[]]),
-                                            pattern = "-.*$", 
-                                            replacement = "-1")
+                                            pattern = "^.*_", 
+                                            replacement = "")
 head(vignette_object$cell_barcode) %>% as.vector()
 ```
 
@@ -254,19 +255,19 @@ must be provided here (ex. 2, but not "2").
 contig_paths
 ```
 
-For example, `contig_paths[2]` holds a path for the TCR contigs for a cells
-from the tumor of S15, so any cell from that sample must have 2 
-(numeric) but not "2" (character) in this new column. We can make this column, 
-here called `index`, as such:
+For example, `contig_paths[2]` holds a path for the TCR contigs for cells 
+from the BALF of patient D3, so any cell from that 
+sample must have 2 (numeric) but not "2" (character) in this new column. We 
+can make this column, here called `index`, as such:
 ```{r makeBatchColumn}
 # Since normal tissue from sample 15 is first (S15N), it is 1.
 # Tumor tissue from 15 is next (S15T), so it is 2, etc...
 vignette_object[[]] <- vignette_object[[]] %>% 
                        mutate(index = case_when(
-                                                Sample == "S15_N" ~ 1,
-                                                Sample == "S15_T" ~ 2,
-                                                Sample == "S3_N" ~ 3,
-                                                Sample == "S3_T" ~ 4))
+                                                Sample == "D3B" ~ 1,
+                                                Sample == "D3L" ~ 2,
+                                                Sample == "D5B" ~ 3,
+                                                Sample == "D5L" ~ 4))
     
 # Checking the column
 table(vignette_object$index)
@@ -277,8 +278,8 @@ Next, we need to tell `ECLIPSE` which donor (or mouse) each cell was from. As
 `ECLIPSE` calls clonotypes by utilizing chain pairing across a repertoire, the 
 more cells that are available, the more accurate this prediction will be 
 (regardless of time/condition/treatment). For this reason, a column is 
-required to provide the donor/mouse. Even if we want to compare S3 tumor vs. 
-normal and S15 tumor vs. normal downstream, here we must provide S3 and S15. 
+required to provide the donor/mouse. Even if we want to compare D3 blood vs. 
+BALF and D5 blood vs. BALF downstream, here we must provide D3 and D5. 
 Fortunately, this column is already created for us, and it should be already 
 present in most real-world uses. Let's look at this column, called `donor`:
 ```{r checkDonorColumn}
@@ -289,7 +290,7 @@ table(vignette_object$donor)
 ### Column to pass to `group`
 Lastly, we need to tell `ECLIPSE` how we want the final clonal statistics 
 (e.g. clone cell count, frequency, etc..) to be calculated after clones are 
-called. For our example, either S15/S3 or S3T/S3N/S15T/S15N would be equally 
+called. For our example, either D15/D3 or D3B/D3L/D5B/D5L would be equally 
 valid. If a clone is only 1 cell, then if we provide the donor, the 
 frequency will be 1/500 vs. if we provide the sample, then it will be
 1/250. **Please note that this column can and often will be the same as the **
@@ -341,13 +342,16 @@ object_after_ECLIPSE <- ECLIPSE(contig_type = "all",
                                 donor = "donor",
                                 group = "Sample",
                                 original_barcode = "cell_barcode",
-                                verbose = FALSE)
+                                verbose = FALSE,
+                                format = "None")
 ```
 
 Note that we use the `contig_folder_paths` argument, omit the 
 `contig_file_paths` argument, and `contig_type = "all"`. Together, this tells 
 `ECLIPSE` to search for `all_contig_annotations.csv` files in the folders that 
-we provide.
+we provide. Additionally, this dataset stores missing data as `"None"`, so we 
+use the `format = "None"` argument. Newer datasets typically store missing 
+data as `""`, so this argument should usually be omitted.
 
 If we want to provide TCR contig file paths, we can use the 
 `contig_file_paths` argument, omit the `contig_folder_paths` argument, and 
@@ -360,7 +364,8 @@ object_after_ECLIPSE <- ECLIPSE(contig_type = "manual",
                                 batch = "index",
                                 donor = "donor",
                                 group = "Sample",
-                                original_barcode = "cell_barcode")
+                                original_barcode = "cell_barcode",
+                                format = "None")
 ```
 
 As seen above, by default (verbose = TRUE), `ECLIPSE` will print some key 
@@ -404,7 +409,7 @@ object_after_ECLIPSE <- tcrArtifactDetect(object_after_ECLIPSE,
 This function by default also prints plots that may be useful in setting
 additional filtering thresholds. Here we can see that cells with 4 total TCR 
 chains have much higher RNA counts, so we may want to remove these cells or 
-any cells with ~ >7k nCount_RNA as they may be enriched for doublets. 
+any cells with ~ >18k nCount_RNA as they may be enriched for doublets. 
 
 # Downstream analysis with `r Biocpkg("scRepertoire")`
 At this point we're ready for downstream analysis. ECLIPSE generates Seurat
@@ -419,7 +424,7 @@ with `r Biocpkg("scRepertoire")`. For example, we can look at clonal sharing
 across samples:
 ```{r runCompareClonotypes, fig.alt = "Plot showing clone sharing"}
 clonalCompare(object_after_ECLIPSE,
-              top.clones = 10,
+              top.clones = 5,
               graph = "alluvial",
               cloneCall = "aa",
               group.by = "Sample") +

@@ -1,7 +1,7 @@
 ---
 title: "Making Example Data"
 output: html_document
-date: "2026-10-28"
+date: "2026-11-09"
 ---
 
 ```{r setup, include=FALSE}
@@ -9,26 +9,22 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 This script documents how all vignette and testing data for the ECLIPSE
-package was made. The Seurat object was from Braun et al., Cancer Cell, 2021,
+package was made. The RNA data is from Zhao et al., Science Immunology, 2021,
 as were the all_contig_annotations.csv files. The doi for this paper is
-10.1016/j.ccell.2021.02.013. The data can be found on dbGaP
-with accession phs002252.v2.p1. The following pieces of data are
-generated below:
+10.1126/sciimmunol.abf6692. The data can be found on GEO with accession GSE167118. 
+The following pieces of data are generated below:
 
-1. A vignette Seurat object that has 250 randomly selected cells per patient
-from 2 patients with RCC, each with a tumor and normal sample 
+1. A vignette Seurat object that has 250 randomly selected cells per sample
+from 2 patients with COVID-19, each with a blood and BALF sample 
 (4 total samples). 
-The RNA data in this object is synthetic, however, as it is not used in our
-package. By changing most of the RNA counts to 0, this saves space. However,
-this is intended to represent a real dataset, even if small.
 2. The 4 all_contig_annotations.csv files that hold the TCR contigs for the
 1000 cells in the vignette Seurat object.
-3. A Seurat object that has all cells from sample S16T in clones that had 3 
+3. A Seurat object that has cells from sample D5L in clones that had 3 
 TCR chains. This is needed for unit testing, as the other objects do not 
-lead to all code being checked. It is 882 cells.
+lead to all code being checked. It is 1759 cells.
 4. A contig file that corresponds to the Seurat object used for unit tests.
 5. A test Seurat object that has 5 randomly selected cells per patient from 
-2 patients with RCC. Only 2 genes are retained in this object to save space.
+2 patients with COVID-19. Only 2 genes are retained in this object to save space.
 This object is intended to be a minimal Seurat object that should only be used
 to confirm that ECLIPSE will run.
 6. The 2 all_contig_annotations.csv files that hold the TCR contigs for the 
@@ -38,7 +34,8 @@ to confirm that ECLIPSE will run.
 test Seurat object from #3.
 
 
-
+To run this script, just change the 4 file paths in the second chunk. Please 
+pick a different folder for each path.
 
 
 
@@ -46,8 +43,29 @@ test Seurat object from #3.
 library(tidyverse)
 library(Seurat)
 library(ECLIPSE)
+library(Matrix)
 set.seed(16)
 ```
+
+```{r}
+### Paths
+#raw_dir <- "PATH/TO/FOLDER/WITH/RNA/AND/TCR/DATA"
+#out_dir <- "PATH/TO/EMPTY/FOLDER/THAT/CAN/HAVE/NEW/FOLDERS"
+#out_dir2 <- "PATH/TO/ANOTHER_EMPTY/FOLDER/THAT/CAN/HAVE/NEW/FOLDERS"
+#out_dir3 <- "PATH/TO/YET/ANOTHER/EMPTY/FOLDER/THAT/CAN/HAVE/NEW/FOLDERS"
+
+raw_dir <- "/gpfs/boyd/pi/pi_db2475/ecb86/sc_datasets/th17_covid"
+out_dir <- "/home/ecb86/Desktop/ECLIPSE/package/inst/extdata/vignette"
+out_dir2 <- "/home/ecb86/Desktop/ECLIPSE/package/inst/extdata/unit_tests"
+out_dir3 <- "/home/ecb86/Desktop/ECLIPSE/package/inst/extdata/examples"
+```
+
+
+### Downloading Data
+Go to https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE167118 to find the 
+data. Please download the all_contig_annotations files from the CD3pos samples 
+of Sar03B, Sar03L, Sar05B, and Sar05L. 
+Then, move the files to 4 folders called Sar3B, Sar3L, Sar5B, and Sar5L.
 
 ```{r}
 ############################################################################
@@ -59,125 +77,115 @@ set.seed(16)
 ### this is used to select cell barcodes that can be used for the vignette
 ### and testing data.
 
-braun <- readRDS(paste0("/gpfs/boyd/pi/pi_db2475/lab_data/sc_assays/",
-    "braun_cancer_cell_2021/processed/braun_cancer_cell_seurat.rds"))
+dirs <- list.files(raw_dir, full.names = TRUE)
+dirs <- dirs[str_detect(dirs, "Sar5|Sar3")]
 
-braun@meta.data <- braun@meta.data %>% 
-    separate(Sample, into = c("donor", "tissue"), remove = FALSE, sep = "_")
-braun@meta.data <- braun@meta.data %>% 
-    mutate(tissue = case_when(
-        tissue %in% c("T", "T2") ~ "Tumor",
-        tissue == "N" ~ "Normal",
-        tissue %in% c("M", "V")  ~ "Other"))
+samples <- str_extract(dirs, "Sar.*")
 
-cd8 <- subset(braun, subset = ClusterName_TCells %in% 
-    c("Treg", "Activated CD4.1", "Activated CD4.2", "CD4 TCM.1", 
-        "CD4 TCM.2", "Mito-high T cells", "-1"), invert = TRUE)
+ps <- list()
+tcr_dirs <- c()
 
-dirs <- list.files(paste0("/gpfs/boyd/pi/pi_db2475/lab_data/sc_assays/",
-    "braun_cancer_cell_2021/raw/TCR/cellranger_output"), recursive = TRUE, 
-    pattern = "all_contig_annotations\\.csv$", full.names = TRUE)
-dirs <- dirs[!str_detect(dirs, "SC_VDJ_ASSEMBLER_CS")]
-dirs <- str_replace(dirs, "all.*$", "")
+for (i in 1:length(dirs)) {
+  
+    print(i)
+  
+    features_dir <- list.files(dirs[i], pattern = "features", full.names = TRUE)
+    features <- read_tsv(features_dir[1], col_names = FALSE)
+    features <- features$X1[1:5000] # Just the first 5k genes to save space
+    
+    matrix_dir <- list.files(dirs[i], pattern = "matrix", full.names = TRUE)
+    matrix <- readMM(matrix_dir[1])
+    matrix <- matrix[1:length(features), ]
+  
+    barcode_dir <- list.files(dirs[i], pattern = "barcodes", full.names = TRUE)
+    barcodes <- read_tsv(barcode_dir[1], col_names = FALSE)
+    barcodes <- barcodes$X1
 
-matching <- read.csv(paste0("/gpfs/boyd/pi/pi_db2475/ecb86/sc_datasets/",
-    "braun_cancer_cell/braun_matching2.csv"))
-matching <- matching %>% filter(Sample != "")
+    tcr_dir <- list.files(dirs[i], pattern = "contig", full.names = TRUE)
+    tcr_dirs[i] <- tcr_dir[1]
+    
+    ps[[i]] <- as.data.frame(matrix)
+    colnames(ps[[i]]) <- paste(samples[i], barcodes, sep = "_")
+    rownames(ps[[i]]) <- features
 
-cd8@meta.data <- cd8@meta.data %>% left_join(matching[, 2:3], by = "Sample")
-cd8@meta.data <- as.data.frame(cd8@meta.data)
-rownames(cd8@meta.data) <- cd8$Cell_barcode
-cd8$Cell_Barcode <- str_replace(cd8$Cell_barcode, "\\-.*$", "-1")
+}
 
-cd8$ClusterName_TCells[cd8$ClusterName_TCells == 
-    "PMCH+ terminally Exhausted CD8.1"] <- 
-    "PMCH+ terminally \n Exhausted CD8.1"
-cd8$ClusterName_TCells[cd8$ClusterName_TCells == 
-    "Terminally exhausted CD8.2"] <- 
-    "Terminally \n exhausted CD8.2"
-cd8$ClusterName_TCells[cd8$ClusterName_TCells == 
-    "Terminally exhausted CD8.3"] <- 
-    "Terminally \n exhausted CD8.3"
+p <- bind_cols(ps)
+rm(ps)
 
-table(cd8$Sample)
+covid <- CreateSeuratObject(p)
+rm(p, matrix)
+VlnPlot(covid, "nCount_RNA", pt.size = 0)
 
-obj <- ECLIPSE(contig_folder_paths = dirs, 
-    contig_type = "all", 
-    seurat_object = cd8, 
-    batch = "index", 
-    donor = "donor", 
-    group = "donor", 
-    original_barcode = "Cell_Barcode", 
-    detailedEclipseStats = TRUE, 
-    combineTcrArgs = list(FALSE, FALSE, TRUE, TRUE))
+covid@meta.data <- covid@meta.data %>% mutate(Sample = str_replace(orig.ident, "Sar", "D"))
+covid$donor <- as.character(str_replace(covid$Sample, "B|L", ""))
+covid$Cell_Barcode <- rownames(covid@meta.data)
+
+covid2 <- covid
+
+covid2$cell_barcode <- str_replace(covid2$Cell_Barcode, "^.*_", "")
+covid2@meta.data <- covid2@meta.data %>% mutate(index = case_when(
+    Sample == "D3B" ~ 1,
+    Sample == "D3L" ~ 2,
+    Sample == "D5B" ~ 3,
+    Sample == "D5L" ~ 4))
+
+covid2 <- ECLIPSE(covid2,
+                         contig_file_paths = tcr_dirs,
+                         contig_type = "manual", 
+                         batch = "index",
+                         donor = "donor",
+                         group = "donor",
+                         original_barcode = "cell_barcode",
+                         format = "none")
+
+
 ```
 
-```{r} 
+```{r}
 ### Making vignette Seurat object and 4 all_contig_files
-s3tbc <- as.character(obj$Cell_barcode[!is.na(obj$CTaa) & 
-    obj$Sample == "S3_T"])
-s3nbc <- as.character(obj$Cell_barcode[!is.na(obj$CTaa) & 
-    obj$Sample == "S3_N"])
-s15tbc <- as.character(obj$Cell_barcode[!is.na(obj$CTaa) & 
-    obj$Sample == "S15_T"])
-s15nbc <- as.character(obj$Cell_barcode[!is.na(obj$CTaa) & 
-    obj$Sample == "S15_N"])
+bc_3b <- as.character(covid2$Cell_Barcode[!is.na(covid2$CTaa) & 
+    covid2$Sample == "D3B"])
+bc_3l <- as.character(covid2$Cell_Barcode[!is.na(covid2$CTaa) & 
+    covid2$Sample == "D3L"])
+bc_5b <- as.character(covid2$Cell_Barcode[!is.na(covid2$CTaa) & 
+    covid2$Sample == "D5B"])
+bc_5l <- as.character(covid2$Cell_Barcode[!is.na(covid2$CTaa) & 
+    covid2$Sample == "D5L"])
 
-s3t <- sample(s3tbc, replace = FALSE, size = 250)
-s3n <- sample(s3nbc, replace = FALSE, size = 250)
-s15t <- sample(s15tbc, replace = FALSE, size = 250)
-s15n <- sample(s15nbc, replace = FALSE, size = 250)
+d3b <- sample(bc_3b, replace = FALSE, size = 250)
+d3l <- sample(bc_3l, replace = FALSE, size = 250)
+d5b <- sample(bc_5b, replace = FALSE, size = 250)
+d5l <- sample(bc_5l, replace = FALSE, size = 250)
 
-keep_bc <- c(s3t, s3n, s15t, s15n)
+keep_bc <- c(d3b, d3l, d5b, d5l)
 
-mini <- subset(cd8, Cell_barcode %in% keep_bc)
+mini <- subset(covid, Cell_Barcode %in% keep_bc)
 
 
-meta <- mini@meta.data %>% select(nCount_RNA, Cell_barcode, donor, Sample)
+d3b_tcr <- read.csv(tcr_dirs[1])
+d3l_tcr <- read.csv(tcr_dirs[2])
+d5b_tcr <- read.csv(tcr_dirs[3])
+d5l_tcr <- read.csv(tcr_dirs[4])
 
-fake <- matrix(rep(0, 2000), nrow = 2)
-rownames(fake) <- c("CD3E", "CD8A")
-fake[1, 1] <- 1
-colnames(fake) <- keep_bc
-data2 <- as(fake, "dgCMatrix")
+d3b_tcr <- d3b_tcr %>% filter(barcode %in% str_replace(d3b, "^.*_", ""))
+d3l_tcr <- d3l_tcr %>% filter(barcode %in% str_replace(d3l, "^.*_", ""))
+d5b_tcr <- d5b_tcr %>% filter(barcode %in% str_replace(d5b, "^.*_", ""))
+d5l_tcr <- d5l_tcr %>% filter(barcode %in% str_replace(d5l, "^.*_", ""))
 
-fake_seurat <- CreateSeuratObject(data2, min.cells = 0, min.features = 0)
-fake_seurat$Cell_barcode <- rownames(fake_seurat@meta.data)
-fake_seurat@meta.data <- fake_seurat@meta.data[,-c(2:3)]
-fake_seurat@meta.data <- fake_seurat@meta.data %>% 
-    left_join(meta, by = "Cell_barcode", keep = FALSE)
+# Only if needed
+#dir.create(paste0(out_dir, "/D3B"))
+#dir.create(paste0(out_dir, "/D3L"))
+#dir.create(paste0(out_dir, "/D5B"))
+#dir.create(paste0(out_dir, "/D5L"))
 
-fake_seurat@meta.data <- as.data.frame(fake_seurat@meta.data)
-rownames(fake_seurat@meta.data) <- fake_seurat$Cell_barcode
+write_csv(d3b_tcr, paste0(out_dir, "/D3B/", "all_contig_annotations.csv.gz"))
+write_csv(d3l_tcr, paste0(out_dir, "/D3L/", "all_contig_annotations.csv.gz"))
+write_csv(d5b_tcr, paste0(out_dir, "/D5B/", "all_contig_annotations.csv.gz"))
+write_csv(d5l_tcr, paste0(out_dir, "/D5L/", "all_contig_annotations.csv.gz"))
 
-s3t_tcr <- read.csv(paste0("/gpfs/boyd/pi/pi_db2475/lab_data/sc_assays/",
-    "braun_cancer_cell_2021/raw/TCR/cellranger_output/Pool1-19/outs/",
-    "all_contig_annotations.csv"))
-s3n_tcr <- read.csv(paste0("/gpfs/boyd/pi/pi_db2475/lab_data/sc_assays/",
-    "braun_cancer_cell_2021/raw/TCR/cellranger_output/Pool2-1/outs/",
-    "all_contig_annotations.csv"))
-s15t_tcr <- read.csv(paste0("/gpfs/boyd/pi/pi_db2475/lab_data/sc_assays/",
-    "braun_cancer_cell_2021/raw/TCR/cellranger_output/Pool2-19/outs/",
-    "all_contig_annotations.csv"))
-s15n_tcr <- read.csv(paste0("/gpfs/boyd/pi/pi_db2475/lab_data/sc_assays/",
-    "braun_cancer_cell_2021/raw/TCR/cellranger_output/Pool3-1/outs/",
-    "all_contig_annotations.csv"))
 
-s3t_tcr <- s3t_tcr %>% filter(barcode %in% str_replace(s3t, "-.*$", "-1"))
-s3n_tcr <- s3n_tcr %>% filter(barcode %in% str_replace(s3n, "-.*$", "-1"))
-s15t_tcr <- s15t_tcr %>% filter(barcode %in% str_replace(s15t, "-.*$", "-1"))
-s15n_tcr <- s15n_tcr %>% filter(barcode %in% str_replace(s15n, "-.*$", "-1"))
-
-write_csv(s3t_tcr, paste0("/home/ecb86/Desktop/ECLIPSE/package/inst/",
-    "extdata/vignette/S3T/all_contig_annotations.csv.gz"))
-write_csv(s3n_tcr, paste0("/home/ecb86/Desktop/ECLIPSE/package/inst/",
-    "extdata/vignette/S3N/all_contig_annotations.csv.gz"))
-write_csv(s15t_tcr, paste0("/home/ecb86/Desktop/ECLIPSE/package/inst/",
-    "extdata/vignette/S15T/all_contig_annotations.csv.gz"))
-write_csv(s15n_tcr, paste0("/home/ecb86/Desktop/ECLIPSE/package/inst/",
-    "extdata/vignette/S15N/all_contig_annotations.csv.gz"))
-
-vignette_object <- fake_seurat
+vignette_object <- mini
 usethis::use_data(vignette_object, overwrite = TRUE)
 ```
 
@@ -185,10 +193,10 @@ usethis::use_data(vignette_object, overwrite = TRUE)
 ### Making another object that has more cells from one sample
 ### This is needed for the unit tests
 
-keep <- obj@meta.data %>% filter(Sample == "S6_T" & 
-    !is.na(CTaa) & str_detect(CTaa, ":::"))
+keep <- covid2@meta.data %>% filter(Sample == "D5L" & 
+    !is.na(CTaa) & str_detect(CTaa, ":::") & cloneCallSource == "VDJdive")
 
-meta <- keep %>% select(nCount_RNA, Cell_barcode, donor, Sample)
+meta <- keep %>% select(nCount_RNA, "Cell_barcode" = Cell_Barcode, donor, Sample)
 
 fake <- matrix(rep(0, nrow(meta) * 2), nrow = 2)
 rownames(fake) <- c("CD3E", "CD8A")
@@ -206,18 +214,17 @@ fake_seurat@meta.data <- as.data.frame(fake_seurat@meta.data)
 rownames(fake_seurat@meta.data) <- fake_seurat$Cell_barcode
 
 fake_seurat$index <- 1
-fake_seurat$Cell_Barcode <- str_replace(fake_seurat$Cell_barcode, "-.*$", "-1")
+fake_seurat$Cell_Barcode <- str_replace(fake_seurat$Cell_barcode, "^.*_", "")
 
-s6t_tcr <- read.csv(paste0("/gpfs/boyd/pi/pi_db2475/lab_data/sc_assays/",
-    "braun_cancer_cell_2021/raw/TCR/cellranger_output/Pool2-5/outs/",
-    "all_contig_annotations.csv"))
+d5l_tcr <- read.csv(tcr_dirs[4])
 
-s6t_tcr <- s6t_tcr %>% filter(barcode %in% 
-    str_replace(meta$Cell_barcode, "-.*$", "-1"))
+d5l_tcr <- d5l_tcr %>% filter(barcode %in% 
+    str_replace(meta$Cell_barcode, "^.*_", ""))
 
+# Only if needed
+#dir.create(paste0(out_dir2, "/D5L"))
 
-write_csv(s6t_tcr, paste0("/home/ecb86/Desktop/ECLIPSE/package/inst/",
-    "extdata/unit_tests/S6T/all_contig_annotations.csv.gz"))
+write_csv(d5l_tcr, paste0(out_dir2, "/D5L/", "all_contig_annotations.csv.gz"))
 
 
 unit_test_object <- fake_seurat
@@ -228,38 +235,34 @@ usethis::use_data(unit_test_object, overwrite = TRUE)
 ### Making slim object and contig files for it.
 ### Note, this is much smaller than the vignette object to increase
 ### run times. That object is 1000 cells, while this one is only 10 cells.
-slim <- subset(cd8, Sample %in% c("S12_T", "S14_T"))
+slim <- subset(covid2, Sample %in% c("D3B", "D5B"))
 
-pool210 <- c("AAAGCAAAGCGTAGTG-1", "AAATGCCTCGGAATCT-1", 
-    "AACCATGAGTGTGGCA-1", "AAGGAGCCACAACTGT-1",
-    "ACACTGACATTTCACT-1")
-pool217 <- c("AACTCCCTCGTACCGG-1", "ACGAGCCAGACTCGGA-1", 
-    "AACTCTTAGTACGCCC-1", "ACATGGTTCGAGCCCA-1", 
-    "CAGTAACTCTAACCGA-1")
+d3b_bc <- c("Sar3B_AAACGGGCATTGTGCA-1", "Sar3B_AAACGGGAGCAGGTCA-1", 
+    "Sar3B_AAAGCAACAAAGGTGC-1", "Sar3B_AACCATGAGTCATGCT-1",
+    "Sar3B_AACGTTGAGTGGGCTA-1")
+d5b_bc <- c("Sar5B_GAGTCCGTCACCACCT-1", "Sar5B_GATCGCGAGCGTTCCG-1", 
+    "Sar5B_GATGCTAGTAGCCTAT-1", "Sar5B_GCACTCTCACGTGAGA-1", 
+    "Sar5B_GCATGTAAGTACGCGA-1")
 
-contigs210 <- read.csv(paste0("/gpfs/boyd/pi/pi_db2475/lab_data/sc_assays/",
-    "braun_cancer_cell_2021/raw/TCR/cellranger_output/Pool2-10/",
-    "outs/all_contig_annotations.csv"))
-contigs217 <- read.csv(paste0("/gpfs/boyd/pi/pi_db2475/lab_data/sc_assays/",
-    "braun_cancer_cell_2021/raw/TCR/cellranger_output/Pool2-17/",
-    "outs/all_contig_annotations.csv"))
+contigs_d3b <- read.csv(tcr_dirs[1])
+contigs_d5b <- read.csv(tcr_dirs[3])
 
-sum(pool210 %in% slim$Cell_Barcode)
-sum(pool217 %in% slim$Cell_Barcode)
+sum(d3b_bc %in% slim$Cell_Barcode)
+sum(d5b_bc %in% slim$Cell_Barcode)
 
-slim210 <- contigs210 %>% filter(barcode %in% pool210)
-slim217 <- contigs217 %>% filter(barcode %in% pool217)
+contigs_d3b <- contigs_d3b %>% filter(barcode %in% str_replace(d3b_bc, "^.*_", ""))
+contigs_d5b <- contigs_d5b %>% filter(barcode %in% str_replace(d5b_bc, "^.*_", ""))
 
-slim2 <- subset(cd8, Cell_Barcode %in% c(pool210, pool217) & 
-    Sample %in% c("S12_T", "S14_T"))
+slim2 <- subset(covid2, Cell_Barcode %in% c(d3b_bc, d5b_bc) & 
+    Sample %in% c("D3B", "D5B"))
                 
 nrow(slim2@meta.data)
 
-meta <- slim2@meta.data %>% select(Cell_barcode, Cell_Barcode, donor, index)
-meta$index[meta$index == 13] <- 1
-meta$index[meta$index == 20] <- 2
+meta <- slim2@meta.data %>% select("Cell_barcode" = Cell_Barcode, donor, index)
+meta$index[meta$index == 1] <- 1
+meta$index[meta$index == 3] <- 2
 
-data <- slim2@assays[["RNA"]]@counts[c("CD3D", "CD8A"), ]
+data <- LayerData(slim2, assay = "RNA", layer = "counts")[c("ENSG00000172116", "ENSG00000153563"), ]
 slim3 <- CreateSeuratObject(data)
 slim3@meta.data <- slim3@meta.data %>% 
     select(-nFeature_RNA) %>%
@@ -268,14 +271,13 @@ slim3@meta.data <- slim3@meta.data %>%
 slim3@meta.data <- slim3@meta.data %>% left_join(meta, by = "Cell_barcode")
 slim3@meta.data <- as.data.frame(slim3@meta.data)
 rownames(slim3@meta.data) <- slim3$Cell_barcode
+slim3$Cell_Barcode <- str_replace(slim3$Cell_barcode, "^.*_", "")
 
 test_seurat <- slim3
 
 
-write_csv(slim210, paste0("/home/ecb86/Desktop/ECLIPSE/package/inst/",
-    "extdata/examples/S12_all_contig_annotations.csv.gz"))
-write_csv(slim217, paste0("/home/ecb86/Desktop/ECLIPSE/package/inst/",
-    "extdata/examples/S14_all_contig_annotations.csv.gz"))
+write_csv(contigs_d3b, paste0(out_dir3, "/D3B_all_contig_annotations.csv.gz"))
+write_csv(contigs_d5b, paste0(out_dir3, "/D5B_all_contig_annotations.csv.gz"))
 
 usethis::use_data(test_seurat, overwrite = TRUE)
 ```
@@ -283,12 +285,11 @@ usethis::use_data(test_seurat, overwrite = TRUE)
 ```{r}
 #### Making the post-QC contigs and test Seurat object after 
 ### ECLIPSE was ran on it
-contig_files <- c(paste0("/home/ecb86/Desktop/ECLIPSE/package/inst/",
-    "extdata/examples/S12_all_contig_annotations.csv.gz"),
-        paste0("/home/ecb86/Desktop/ECLIPSE/package/inst/",
-    "extdata/examples/S14_all_contig_annotations.csv.gz"))
+contig_files <- c(paste0(out_dir3, "/D3B_all_contig_annotations.csv.gz"),
+        paste0(out_dir3, "/D5B_all_contig_annotations.csv.gz"))
 
 data('test_seurat')
+
 
 cd8_tcr <- ECLIPSE(contig_file_paths = contig_files, 
     contig_type = "manual", 
@@ -297,7 +298,8 @@ cd8_tcr <- ECLIPSE(contig_file_paths = contig_files,
     donor = "donor", 
     group = "donor", 
     original_barcode = "Cell_Barcode", 
-    combineTcrArgs = list(FALSE, FALSE, FALSE, TRUE))
+    combineTcrArgs = list(FALSE, FALSE, FALSE, TRUE),
+    format = "None")
 
 test_seurat_with_tcr <- cd8_tcr
 usethis::use_data(test_seurat_with_tcr, overwrite = TRUE)
@@ -310,7 +312,8 @@ post_qc_contigs <- ECLIPSE(contig_file_paths = contig_files,
     group = "donor", 
     original_barcode = "Cell_Barcode", 
     combineTcrArgs = list(FALSE, FALSE, FALSE, TRUE),
-    returnFilteredContigs = TRUE)
+    returnFilteredContigs = TRUE,
+    format = "None")
 
 usethis::use_data(post_qc_contigs, overwrite = TRUE)
 ```

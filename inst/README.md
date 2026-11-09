@@ -1,24 +1,20 @@
-This script documents how all vignette and testing data for the ECLIPSE
-package was made. The Seurat object was from Braun et al., Cancer Cell, 2021,
+The script in /inst/scripts documents how all vignette and testing data for the ECLIPSE
+package was made. The RNA data is from Zhao et al., Science Immunology, 2021,
 as were the all_contig_annotations.csv files. The doi for this paper is
-10.1016/j.ccell.2021.02.013. The data can be found on dbGaP
-with accession phs002252.v2.p1. The following pieces of data are
-generated below:
+10.1126/sciimmunol.abf6692. The data can be found on GEO with accession GSE167118. 
+The following pieces of data in ECLIPSE:
 
-1. A vignette Seurat object that has 250 randomly selected cells per patient
-from 2 patients with RCC, each with a tumor and normal sample 
+1. A vignette Seurat object that has 250 randomly selected cells per sample
+from 2 patients with COVID-19, each with a blood and BALF sample 
 (4 total samples). 
-The RNA data in this object is synthetic, however, as it is not used in our
-package. By changing most of the RNA counts to 0, this saves space. However,
-this is intended to represent a real dataset, even if small.
 2. The 4 all_contig_annotations.csv files that hold the TCR contigs for the
 1000 cells in the vignette Seurat object.
-3. A Seurat object that has all cells from sample S16T in clones that had 3 
+3. A Seurat object that has cells from sample D5L in clones that had 3 
 TCR chains. This is needed for unit testing, as the other objects do not 
-lead to all code being checked. It is 882 cells.
+lead to all code being checked. It is 1759 cells.
 4. A contig file that corresponds to the Seurat object used for unit tests.
 5. A test Seurat object that has 5 randomly selected cells per patient from 
-2 patients with RCC. Only 2 genes are retained in this object to save space.
+2 patients with COVID-19. Only 2 genes are retained in this object to save space.
 This object is intended to be a minimal Seurat object that should only be used
 to confirm that ECLIPSE will run.
 6. The 2 all_contig_annotations.csv files that hold the TCR contigs for the 

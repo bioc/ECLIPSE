@@ -8,7 +8,7 @@ tcr_paths <- list.files(files,
     full.names = TRUE
 )
 
-unit_test_files <- system.file("extdata/unit_tests/S6T", package = "ECLIPSE")
+unit_test_files <- system.file("extdata/unit_tests/D5L", package = "ECLIPSE")
 unit_test_tcr_paths <- list.files(unit_test_files,
     pattern = "\\.csv",
     full.names = TRUE)
@@ -521,7 +521,7 @@ test_that("The verbose argument of ECLIPSE works correctly", {
 
 test_that("findThreeChainClones accepts only valid inputs", {
     expect_error(
-        findThreeChainClones(post_qc_contigs[, 30:34],
+        findThreeChainClones(post_qc_contigs[, 1:4],
             chain = "a",
             mode = "standard",
             printStats = TRUE
@@ -1089,7 +1089,7 @@ test_that(".qcFilterContigs works correctly", {
             Format = "Blank",
             ReturnFilteredContigs = FALSE,
             Verbose = TRUE)[[1]])
-        %in% c("barcode", "reads", "cdr3", "chainTypes", "cdr1")) == 5
+        %in% c("barcode", "reads", "cdr3", "chainTypes", "cdr3_nt")) == 5
     )
 
     expect_s4_class(

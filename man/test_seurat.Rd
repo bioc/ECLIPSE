@@ -8,12 +8,13 @@
 A Seurat object.
 }
 \source{
-This is from 10 cells taken from Braun et al., Cancer Cell, 2021,
-with doi 10.1016/j.ccell.2021.02.013. Please view the README file in inst/
-for more information. Code to reproduce this is available in inst/scripts/.
+This is from 10 cells taken from Zhao et al., Science Immunology,
+2021, with doi 10.1126/sciimmunol.abf6692. Please view the README file in
+inst/ for more information. Code to reproduce this is available in
+inst/scripts/. The data is available on GEO with GSE167118.
 }
 \usage{
-data(test_seurat)
+test_seurat
 }
 \description{
 Example minimal Seurat object without TCR information.
