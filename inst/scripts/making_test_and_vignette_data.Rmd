@@ -162,6 +162,23 @@ keep_bc <- c(d3b, d3l, d5b, d5l)
 
 mini <- subset(covid, Cell_Barcode %in% keep_bc)
 
+meta <- mini@meta.data %>% select(nCount_RNA, Cell_barcode = "Cell_Barcode", donor, Sample)
+
+fake <- matrix(rep(0, nrow(meta) * 2), nrow = 2)
+rownames(fake) <- c("CD3E", "CD8A")
+fake[1, 1] <- 1
+colnames(fake) <- keep_bc
+data2 <- as(fake, "dgCMatrix")
+
+fake_seurat <- CreateSeuratObject(data2, min.cells = 0, min.features = 0)
+fake_seurat$Cell_barcode <- rownames(fake_seurat@meta.data)
+fake_seurat@meta.data <- fake_seurat@meta.data[,-c(2:3)]
+fake_seurat@meta.data <- fake_seurat@meta.data %>% 
+    left_join(meta, by = "Cell_barcode", keep = FALSE)
+
+fake_seurat@meta.data <- as.data.frame(fake_seurat@meta.data)
+rownames(fake_seurat@meta.data) <- fake_seurat$Cell_barcode
+
 
 d3b_tcr <- read.csv(tcr_dirs[1])
 d3l_tcr <- read.csv(tcr_dirs[2])
@@ -185,7 +202,7 @@ write_csv(d5b_tcr, paste0(out_dir, "/D5B/", "all_contig_annotations.csv.gz"))
 write_csv(d5l_tcr, paste0(out_dir, "/D5L/", "all_contig_annotations.csv.gz"))
 
 
-vignette_object <- mini
+vignette_object <- fake_seurat
 usethis::use_data(vignette_object, overwrite = TRUE)
 ```
 

@@ -239,7 +239,7 @@ As you can see, they do not match. Let's remove the prefix and make a
 new column called `cell_barcode` that we can pass to the `original_barcode` 
 argument of ECLIPSE:
 ```{r makeBarcodeColumn}
-# Making a column with these barcodes where the suffix is -1
+# Making a column with these barcodes where there is no prefix
 vignette_object$cell_barcode <- str_replace(rownames(vignette_object[[]]),
                                             pattern = "^.*_", 
                                             replacement = "")
@@ -290,7 +290,7 @@ table(vignette_object$donor)
 ### Column to pass to `group`
 Lastly, we need to tell `ECLIPSE` how we want the final clonal statistics 
 (e.g. clone cell count, frequency, etc..) to be calculated after clones are 
-called. For our example, either D15/D3 or D3B/D3L/D5B/D5L would be equally 
+called. For our example, either D5/D3 or D3B/D3L/D5B/D5L would be equally 
 valid. If a clone is only 1 cell, then if we provide the donor, the 
 frequency will be 1/500 vs. if we provide the sample, then it will be
 1/250. **Please note that this column can and often will be the same as the **
@@ -409,7 +409,7 @@ object_after_ECLIPSE <- tcrArtifactDetect(object_after_ECLIPSE,
 This function by default also prints plots that may be useful in setting
 additional filtering thresholds. Here we can see that cells with 4 total TCR 
 chains have much higher RNA counts, so we may want to remove these cells or 
-any cells with ~ >18k nCount_RNA as they may be enriched for doublets. 
+any cells with ~ >2.5k nCount_RNA as they may be enriched for doublets. 
 
 # Downstream analysis with `r Biocpkg("scRepertoire")`
 At this point we're ready for downstream analysis. ECLIPSE generates Seurat
@@ -500,16 +500,16 @@ tcr_folder_paths <- list.dirs(path = vignette_dir, full.names = TRUE)[-1]
 
 #2: Make a column that has the original cell barcodes
 new_seurat$cell_barcode <- str_replace(rownames(new_seurat[[]]),
-                                       pattern = "-.*$", 
-                                       replacement = "-1")
+                                       pattern = "^.*_", 
+                                       replacement = "")
 
 #3: Make a column to pass to batch
 new_seurat[[]] <- new_seurat[[]] %>% 
                   mutate(index = case_when(
-                                           Sample == "S15_N" ~ 1,
-                                           Sample == "S15_T" ~ 2,
-                                           Sample == "S3_N" ~ 3,
-                                           Sample == "S3_T" ~ 4))
+                                           Sample == "D3B" ~ 1,
+                                           Sample == "D3L" ~ 2,
+                                           Sample == "D5B" ~ 3,
+                                           Sample == "D5L" ~ 4))
 
 #4: Make a column to pass to donor (already done for us here)
 table(new_seurat$donor)
@@ -525,7 +525,8 @@ new_seurat_with_tcr <- ECLIPSE(contig_type = "all",
                                donor = "donor",
                                group = "Sample",
                                original_barcode = "cell_barcode",
-                              verbose = FALSE)
+                              verbose = FALSE,
+                              format = "None")
 ```
 
 ### Step 3: Convert back to old format or extract columns of interest and merge
@@ -590,16 +591,17 @@ postqc_contigs <- ECLIPSE(contig_type = "all",
                           group = "Sample",
                           original_barcode = "cell_barcode",
                           verbose = FALSE,
-                          returnFilteredContigs = TRUE)
+                          returnFilteredContigs = TRUE,
+                          format = "None")
 ```
 
 Next, we filter on a sample we are interested in, and pass the contigs onto
 `findThreeChainClones` using ` mode = "show"` and `chain = "a"`
 to show clones with 2 TCRα chains:
 ```{r runFindThreeChainClones}
-s15_contigs <- postqc_contigs %>% filter(donor == "S15")
+d3_contigs <- postqc_contigs %>% filter(donor == "D3")
 
-three_chain_clones <- findThreeChainClones(s15_contigs,
+three_chain_clones <- findThreeChainClones(d3_contigs,
                                            chain = "a",
                                            mode = "show",
                                            printStats = TRUE)
