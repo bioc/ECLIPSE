@@ -110,6 +110,11 @@ sceECLIPSE <- function(sce_object,
             "Please try again.")
     }
 
+    if (requireNamespace("tibble", quietly = TRUE) == FALSE) {
+        stop("Please install tibble to use sceECLIPSE. ",
+            "Please try again.")
+    }
+
     ### All other arguments are identical to ECLIPSE so it will check them
 
     seurat_obj <- SeuratObject::as.Seurat(sce_object, data = NULL)

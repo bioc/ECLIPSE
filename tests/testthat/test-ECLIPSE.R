@@ -1696,7 +1696,7 @@ test_that("sceECLIPSE works correctly", {
 
    ### sceECLIPSE returns SCE objects with expected new columns in colData
    expect_true(
-        sum(colnames(colData(sceECLIPSE(
+        sum(colnames(SummarizedExperiment::colData(sceECLIPSE(
             contig_file_paths = tcr_paths,
             contig_type = "manual",
             sce_object = test_sce,
@@ -1715,25 +1715,27 @@ test_that("sceECLIPSE works correctly", {
 
    ### sceECLIPSE returns SCE objects that retain all original columns
    expect_true(
-        sum(colnames(colData(test_sce)) %in% colnames(colData(sceECLIPSE(
-            contig_file_paths = tcr_paths,
-            contig_type = "manual",
-            sce_object = test_sce,
-            batch = "index",
-            donor = "donor",
-            group = "donor",
-            original_barcode = "Cell_Barcode",
-            detailedEclipseStats = FALSE,
-            combineTcrArgs = list(FALSE, FALSE, FALSE, TRUE),
-            allowDoubleChains = "both",
-            verbose = FALSE,
-            returnFilteredContigs = FALSE
-        )))) == ncol(colData(test_sce))
+        sum(colnames(SummarizedExperiment::colData(test_sce)) %in%
+            colnames(SummarizedExperiment::colData(sceECLIPSE(
+                contig_file_paths = tcr_paths,
+                contig_type = "manual",
+                sce_object = test_sce,
+                batch = "index",
+                donor = "donor",
+                group = "donor",
+                original_barcode = "Cell_Barcode",
+                detailedEclipseStats = FALSE,
+                combineTcrArgs = list(FALSE, FALSE, FALSE, TRUE),
+                allowDoubleChains = "both",
+                verbose = FALSE,
+                returnFilteredContigs = FALSE
+        )))) == ncol(SummarizedExperiment::colData(test_sce))
     )
 
    ### Ordering of cells is correct and retained with sceECLIPSE
    expect_true(
-        sum(rownames(colData(test_sce)) == rownames(colData(sceECLIPSE(
+        sum(rownames(SummarizedExperiment::colData(test_sce)) ==
+            rownames(SummarizedExperiment::colData(sceECLIPSE(
             contig_file_paths = tcr_paths,
             contig_type = "manual",
             sce_object = test_sce,
@@ -1746,7 +1748,7 @@ test_that("sceECLIPSE works correctly", {
             allowDoubleChains = "both",
             verbose = FALSE,
             returnFilteredContigs = FALSE
-        )))) == nrow(colData(test_sce))
+        )))) == nrow(SummarizedExperiment::colData(test_sce))
     )
 
    ### Normal ECLIPSE errors still work with sceECLIPSE
