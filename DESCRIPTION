@@ -37,6 +37,8 @@ Suggests:
     BiocStyle,
     Seurat,
     SingleCellExperiment,
-    S4Vectors
+    S4Vectors,
+    SummarizedExperiment,
+    SeuratObject
 VignetteBuilder: knitr
 RoxygenNote: 8.0.0

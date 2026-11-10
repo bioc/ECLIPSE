@@ -14,7 +14,7 @@ inst/ for more information. Code to reproduce this is available in
 inst/scripts/. The data is available on GEO with GSE167118.
 }
 \usage{
-test_seurat
+data(test_seurat)
 }
 \description{
 Example minimal Seurat object without TCR information.

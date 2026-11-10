@@ -1632,3 +1632,139 @@ test_that(".findMissingMonotypicChains works correctly", {
 })
 
 
+
+test_sce <- as.SingleCellExperiment(test_seurat)
+
+
+
+test_that("sceECLIPSE works correctly", {
+
+    ### scECLIPSE doesn't accept Seurat objects
+    expect_error(
+        sceECLIPSE(
+            contig_file_paths = tcr_paths,
+            contig_type = "manual",
+            sce_object = test_seurat,
+            batch = "index",
+            donor = "donor",
+            group = "donor",
+            original_barcode = "Cell_Barcode",
+            detailedEclipseStats = FALSE,
+            combineTcrArgs = list(FALSE, FALSE, FALSE, TRUE),
+            allowDoubleChains = "both",
+            verbose = FALSE
+        ),
+        "sce_object is not a SingleCellExperiment object"
+    )
+
+    ### sceECLIPSE returns SCE objects
+    expect_s4_class(
+        sceECLIPSE(
+            contig_file_paths = tcr_paths,
+            contig_type = "manual",
+            sce_object = test_sce,
+            batch = "index",
+            donor = "donor",
+            group = "donor",
+            original_barcode = "Cell_Barcode",
+            detailedEclipseStats = FALSE,
+            combineTcrArgs = list(FALSE, FALSE, FALSE, TRUE),
+            allowDoubleChains = "both",
+            verbose = FALSE
+        ),
+        "SingleCellExperiment"
+    )
+
+    ### sceECLIPSE returns a tibble if returnFilteredContigs == TRUE
+    expect_s3_class(
+        sceECLIPSE(
+            contig_file_paths = tcr_paths,
+            contig_type = "manual",
+            sce_object = test_sce,
+            batch = "index",
+            donor = "donor",
+            group = "donor",
+            original_barcode = "Cell_Barcode",
+            detailedEclipseStats = FALSE,
+            combineTcrArgs = list(FALSE, FALSE, FALSE, TRUE),
+            allowDoubleChains = "both",
+            verbose = FALSE,
+            returnFilteredContigs = TRUE
+        ),
+        "tbl_df"
+    )
+
+   ### sceECLIPSE returns SCE objects with expected new columns in colData
+   expect_true(
+        sum(colnames(colData(sceECLIPSE(
+            contig_file_paths = tcr_paths,
+            contig_type = "manual",
+            sce_object = test_sce,
+            batch = "index",
+            donor = "donor",
+            group = "donor",
+            original_barcode = "Cell_Barcode",
+            detailedEclipseStats = FALSE,
+            combineTcrArgs = list(FALSE, FALSE, FALSE, TRUE),
+            allowDoubleChains = "both",
+            verbose = FALSE,
+            returnFilteredContigs = FALSE
+        ))) %in% c("CTaa", "highConfChains", "cloneCallSource",
+            "scR_CTaa", "cloneSize")) == 5
+    )
+
+   ### sceECLIPSE returns SCE objects that retain all original columns
+   expect_true(
+        sum(colnames(colData(test_sce)) %in% colnames(colData(sceECLIPSE(
+            contig_file_paths = tcr_paths,
+            contig_type = "manual",
+            sce_object = test_sce,
+            batch = "index",
+            donor = "donor",
+            group = "donor",
+            original_barcode = "Cell_Barcode",
+            detailedEclipseStats = FALSE,
+            combineTcrArgs = list(FALSE, FALSE, FALSE, TRUE),
+            allowDoubleChains = "both",
+            verbose = FALSE,
+            returnFilteredContigs = FALSE
+        )))) == ncol(colData(test_sce))
+    )
+
+   ### Ordering of cells is correct and retained with sceECLIPSE
+   expect_true(
+        sum(rownames(colData(test_sce)) == rownames(colData(sceECLIPSE(
+            contig_file_paths = tcr_paths,
+            contig_type = "manual",
+            sce_object = test_sce,
+            batch = "index",
+            donor = "donor",
+            group = "donor",
+            original_barcode = "Cell_Barcode",
+            detailedEclipseStats = FALSE,
+            combineTcrArgs = list(FALSE, FALSE, FALSE, TRUE),
+            allowDoubleChains = "both",
+            verbose = FALSE,
+            returnFilteredContigs = FALSE
+        )))) == nrow(colData(test_sce))
+    )
+
+   ### Normal ECLIPSE errors still work with sceECLIPSE
+   expect_error(
+        sceECLIPSE(
+            contig_file_paths = tcr_paths,
+            contig_type = "manual",
+            sce_object = test_sce,
+            batch = "index",
+            donor = "fake",
+            group = "donor",
+            original_barcode = "Cell_Barcode",
+            detailedEclipseStats = FALSE,
+            combineTcrArgs = list(FALSE, FALSE, FALSE, TRUE),
+            allowDoubleChains = "both",
+            verbose = FALSE,
+            returnFilteredContigs = FALSE
+        ),
+        "Donor column name provided is not in the Seurat object"
+   )
+})

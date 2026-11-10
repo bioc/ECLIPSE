@@ -16,7 +16,7 @@ inst/ for more information. Code to reproduce this is available in
 inst/scripts/. The data is available on GEO with GSE167118.
 }
 \usage{
-post_qc_contigs
+data(post_qc_contigs)
 }
 \description{
 Example Post-QC TCR contigs that would be generated within ECLIPSE

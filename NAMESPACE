@@ -2,6 +2,7 @@
 
 export(ECLIPSE)
 export(findThreeChainClones)
+export(sceECLIPSE)
 export(tcrArtifactDetect)
 importFrom(VDJdive,clonoNames)
 importFrom(VDJdive,clonoStats)

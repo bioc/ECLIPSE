@@ -14,7 +14,7 @@ inst/ for more information. Code to reproduce this is available in
 inst/scripts/. The data is available on GEO with GSE167118.
 }
 \usage{
-unit_test_object
+data(unit_test_object)
 }
 \description{
 Example small Seurat object without TCR information used for unit testing.
