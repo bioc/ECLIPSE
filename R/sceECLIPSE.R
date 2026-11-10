@@ -64,7 +64,7 @@
 #'                 pattern = "\\.csv.gz$",
 #'                 full.names = TRUE)
 #'
-#' sce_obj <- SeuratObject::as.Seurat(test_seurat)
+#' sce_obj <- Seurat::as.SingleCellExperiment(test_seurat)
 #'
 #' cd8_tcr <- sceECLIPSE(sce_obj,
 #'                     contig_file_paths = tcr_paths,
@@ -126,7 +126,7 @@ sceECLIPSE <- function(sce_object,
         detailedEclipseStats = detailedEclipseStats,
         combineTcrArgs = combineTcrArgs,
         allowDoubleChains = allowDoubleChains,
-        returnFilteredConitgs = returnFilteredContigs,
+        returnFilteredContigs = returnFilteredContigs,
         verbose = verbose
         )
 
@@ -144,9 +144,9 @@ sceECLIPSE <- function(sce_object,
         all_of(c("cell_barcode_for_eclipse", new_cols)))
 
     new_meta <- as.data.frame(SummarizedExperiment::colData(sce_object)) %>%
-        rownames_to_column("cell_barcode_for_eclipse") %>%
+        tibble::rownames_to_column("cell_barcode_for_eclipse") %>%
         left_join(meta, by = "cell_barcode_for_eclipse") %>%
-        column_to_rownames("cell_barcode_for_eclipse")
+        tibble::column_to_rownames("cell_barcode_for_eclipse")
 
     if (sum(rownames(new_meta) == colnames(sce_object)) !=
         length(rownames(new_meta))) {

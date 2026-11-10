@@ -1633,7 +1633,7 @@ test_that(".findMissingMonotypicChains works correctly", {
 
 
 
-test_sce <- as.SingleCellExperiment(test_seurat)
+test_sce <- Seurat::as.SingleCellExperiment(test_seurat)
 
 
 

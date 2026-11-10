@@ -39,6 +39,7 @@ Suggests:
     SingleCellExperiment,
     S4Vectors,
     SummarizedExperiment,
-    SeuratObject
+    SeuratObject,
+    tibble
 VignetteBuilder: knitr
 RoxygenNote: 8.0.0

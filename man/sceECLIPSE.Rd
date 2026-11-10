@@ -100,7 +100,7 @@ tcr_paths <- list.files(
                 pattern = "\\\\.csv.gz$",
                 full.names = TRUE)
 
-sce_obj <- SeuratObject::as.Seurat(test_seurat)
+sce_obj <- Seurat::as.SingleCellExperiment(test_seurat)
 
 cd8_tcr <- sceECLIPSE(sce_obj,
                     contig_file_paths = tcr_paths,
