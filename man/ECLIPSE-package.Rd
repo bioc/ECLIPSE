@@ -5,7 +5,7 @@
 \alias{ECLIPSE-package}
 \title{ECLIPSE: Enhanced CLonotypic Inference via Prediction of Single-cell Expression}
 \description{
-This package is used for the analysis of single-cell T cell receptor sequencing data (scTCR-seq). ECLIPSE maps chain pairings across a sample to predict the true clonotype of each cell, unlike other methods which only consider the chains that are sequenced in each cell. Seurat objects and Cell Ranger vdj/multi contig files are required as inputs.
+This package is used for the analysis of single-cell T cell receptor sequencing data (scTCR-seq). ECLIPSE maps chain pairings across a sample to predict the true clonotype of each cell, unlike other methods which only consider the chains that are sequenced in each cell. Seurat/SingleCellExperiment objects and Cell Ranger vdj/multi contig files are required as inputs.
 }
 \seealso{
 Useful links:

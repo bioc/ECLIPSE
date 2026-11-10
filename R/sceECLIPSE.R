@@ -143,7 +143,7 @@ sceECLIPSE <- function(sce_object,
         colnames(seurat_object@meta.data) %in% colnames(seurat_obj@meta.data)
         == FALSE]
 
-   seurat_object$cell_barcode_for_eclipse <- rownames(seurat_object@meta.data)
+    seurat_object$cell_barcode_for_eclipse <- rownames(seurat_object@meta.data)
 
     meta <- seurat_object@meta.data %>% select(
         all_of(c("cell_barcode_for_eclipse", new_cols)))

@@ -1,12 +1,12 @@
 Package: ECLIPSE
 Title: Enhanced CLonotypic Inference via Prediction of Single-cell Expression
-Version: 0.99.2
+Version: 0.99.3
 Authors@R: c(
     person("Ethan", "Burns", comment = c(ORCID = "0009-0009-8061-3686"), email = "ethan.burns@yale.edu", role = c("aut", "cre")),
     person("Zhaochen", "Ye", comment = c(ORCID = "0009-0000-4422-3861"), email = "zhaochen.ye@yale.edu", role = "ctb"),
     person("Kelly", "Street", comment = c(ORCID = "0000-0001-6379-5013"), email = "kelly.street@gmail.com", role = "ctb"),
     person("David", "Braun", comment = c(ORCID = "0000-0003-4543-5553"), email = "david.braun@yale.edu", role = c("aut", "fnd")))
-Description: This package is used for the analysis of single-cell T cell receptor sequencing data (scTCR-seq). ECLIPSE maps chain pairings across a sample to predict the true clonotype of each cell, unlike other methods which only consider the chains that are sequenced in each cell. Seurat objects and Cell Ranger vdj/multi contig files are required as inputs.
+Description: This package is used for the analysis of single-cell T cell receptor sequencing data (scTCR-seq). ECLIPSE maps chain pairings across a sample to predict the true clonotype of each cell, unlike other methods which only consider the chains that are sequenced in each cell. Seurat/SingleCellExperiment objects and Cell Ranger vdj/multi contig files are required as inputs.
 License: GPL (>= 3)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
