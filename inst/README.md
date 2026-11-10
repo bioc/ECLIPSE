@@ -25,7 +25,8 @@ test Seurat object from #3.
 
 All all_contig_annotations files can be found in inst/extdata. All other data 
 can be found in the data/ folder, with documentation in the R/data.R file.
-A script to all data is available in inst/scripts.
+A script to all data is available in inst/scripts. Most RNA data is fake 
+(mostly empty to reduce file size), with the meta.data and TCR data being real.
 
 
 

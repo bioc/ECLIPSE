@@ -41,9 +41,6 @@ knitr::opts_chunk$set(
 # Introduction
 
 This vignette walks through the basic workflow of the ECLIPSE package.
-Please refer to our 
-[pre-print](https://www.biorxiv.org/content/10.64898/2026.02.18.706444v1)
-for more details about this method.
 
 ## What is ECLIPSE? Why should I use it to analyze my scTCR-seq data?
 
